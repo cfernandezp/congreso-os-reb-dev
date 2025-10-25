@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Bash(powershell -Command:*)",
-      "Bash(dir \"c:\\Cristian\\Proyectos\\os-congreso\\CodigoFuenteTexto\\Datawindows\" /b)"
+      "Bash(dir \"c:\\Cristian\\Proyectos\\os-congreso\\CodigoFuenteTexto\\Datawindows\" /b)",
+      "Bash(ren:*)",
+      "Bash(git checkout:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []
