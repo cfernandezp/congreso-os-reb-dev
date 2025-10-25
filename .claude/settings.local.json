@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell -Command:*)",
+      "Bash(dir \"c:\\Cristian\\Proyectos\\os-congreso\\CodigoFuenteTexto\\Datawindows\" /b)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
