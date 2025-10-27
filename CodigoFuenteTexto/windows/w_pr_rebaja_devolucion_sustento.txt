@@ -1,0 +1,358 @@
+forward
+global type w_pr_rebaja_devolucion_sustento from window
+end type
+type mle_descripcion from multilineedit within w_pr_rebaja_devolucion_sustento
+end type
+type sle_archivopdf from singlelineedit within w_pr_rebaja_devolucion_sustento
+end type
+type cb_adjuntar from commandbutton within w_pr_rebaja_devolucion_sustento
+end type
+type cb_aceptar from commandbutton within w_pr_rebaja_devolucion_sustento
+end type
+type cb_cancelar from commandbutton within w_pr_rebaja_devolucion_sustento
+end type
+type st_titulo from statictext within w_pr_rebaja_devolucion_sustento
+end type
+type st_descripcion from statictext within w_pr_rebaja_devolucion_sustento
+end type
+type st_archivo from statictext within w_pr_rebaja_devolucion_sustento
+end type
+end forward
+
+global type w_pr_rebaja_devolucion_sustento from window
+integer width = 2400
+integer height = 1236
+boolean titlebar = true
+string title = "Sustento para Cambio de Estado"
+boolean controlmenu = true
+windowtype windowtype = response!
+long backcolor = 12632256
+boolean center = true
+mle_descripcion mle_descripcion
+sle_archivopdf sle_archivopdf
+cb_adjuntar cb_adjuntar
+cb_aceptar cb_aceptar
+cb_cancelar cb_cancelar
+st_titulo st_titulo
+st_descripcion st_descripcion
+st_archivo st_archivo
+end type
+global w_pr_rebaja_devolucion_sustento w_pr_rebaja_devolucion_sustento
+
+type variables
+string is_tipo_cambio
+string is_mensaje_titulo
+end variables
+
+forward prototypes
+public function boolean wf_validar ()
+end prototypes
+
+public function boolean wf_validar ();/*==================================================================
+Función: wf_validar
+Propósito: Validar que exista sustento (descripción >= 20 chars O archivo PDF)
+Retorna: TRUE si es válido, FALSE si no
+==================================================================*/
+
+string ls_descripcion, ls_archivopdf
+integer li_len
+
+ls_descripcion = Trim(mle_descripcion.Text)
+ls_archivopdf = Trim(sle_archivopdf.Text)
+
+li_len = Len(ls_descripcion)
+
+// Validar que tenga al menos uno de los dos
+IF li_len = 0 AND Len(ls_archivopdf) = 0 THEN
+	MessageBox("Advertencia", &
+		"Debe proporcionar un SUSTENTO:~r~n~r~n" + &
+		"• Una descripción (mínimo 20 caracteres) O~r~n" + &
+		"• Un archivo PDF O~r~n" + &
+		"• Ambos~r~n~r~n" + &
+		"El sustento es OBLIGATORIO para justificar el cambio de estado.", &
+		Exclamation!)
+	mle_descripcion.SetFocus()
+	RETURN FALSE
+END IF
+
+// Si tiene descripción, validar longitud mínima
+IF li_len > 0 AND li_len < 20 THEN
+	MessageBox("Advertencia", &
+		"La descripción debe tener al menos 20 caracteres.~r~n~r~n" + &
+		"Caracteres actuales: " + String(li_len) + "~r~n" + &
+		"Caracteres mínimos: 20~r~n~r~n" + &
+		"Por favor, proporcione una descripción más detallada.", &
+		Exclamation!)
+	mle_descripcion.SetFocus()
+	RETURN FALSE
+END IF
+
+// Si tiene archivo PDF, verificar que exista
+IF Len(ls_archivopdf) > 0 THEN
+	IF NOT FileExists(ls_archivopdf) THEN
+		MessageBox("Error", &
+			"El archivo PDF no existe:~r~n~r~n" + ls_archivopdf, &
+			StopSign!)
+		sle_archivopdf.SetFocus()
+		RETURN FALSE
+	END IF
+END IF
+
+RETURN TRUE
+
+end function
+
+on w_pr_rebaja_devolucion_sustento.create
+this.mle_descripcion=create mle_descripcion
+this.sle_archivopdf=create sle_archivopdf
+this.cb_adjuntar=create cb_adjuntar
+this.cb_aceptar=create cb_aceptar
+this.cb_cancelar=create cb_cancelar
+this.st_titulo=create st_titulo
+this.st_descripcion=create st_descripcion
+this.st_archivo=create st_archivo
+this.Control[]={this.mle_descripcion,&
+this.sle_archivopdf,&
+this.cb_adjuntar,&
+this.cb_aceptar,&
+this.cb_cancelar,&
+this.st_titulo,&
+this.st_descripcion,&
+this.st_archivo}
+end on
+
+on w_pr_rebaja_devolucion_sustento.destroy
+destroy(this.mle_descripcion)
+destroy(this.sle_archivopdf)
+destroy(this.cb_adjuntar)
+destroy(this.cb_aceptar)
+destroy(this.cb_cancelar)
+destroy(this.st_titulo)
+destroy(this.st_descripcion)
+destroy(this.st_archivo)
+end on
+
+event open;/*==================================================================
+Evento: open
+Propósito: Inicializar ventana de sustento
+Parámetros esperados (str_pass):
+   - s[1] = Tipo de cambio (ej: "ANULACION", "RECTIFICATORIA", "DEVOLUCION")
+   - s[2] = Mensaje/instrucción para el usuario
+==================================================================*/
+
+str_pass lstr_param
+
+IF IsValid(Message.PowerObjectParm) THEN
+	lstr_param = Message.PowerObjectParm
+	is_tipo_cambio = lstr_param.s[1]
+	is_mensaje_titulo = lstr_param.s[2]
+ELSE
+	is_tipo_cambio = "CAMBIO DE ESTADO"
+	is_mensaje_titulo = "Ingrese el sustento del cambio de estado"
+END IF
+
+// Configurar título
+st_titulo.Text = "Sustento para: " + is_tipo_cambio
+st_descripcion.Text = is_mensaje_titulo
+
+// Limpiar campos
+mle_descripcion.Text = ""
+sle_archivopdf.Text = ""
+
+mle_descripcion.SetFocus()
+
+end event
+
+type mle_descripcion from multilineedit within w_pr_rebaja_devolucion_sustento
+integer x = 50
+integer y = 200
+integer width = 2199
+integer height = 600
+integer taborder = 10
+integer textsize = -9
+integer weight = 400
+fontcharset fontcharset = ansi!
+fontpitch fontpitch = variable!
+fontfamily fontfamily = swiss!
+string facename = "MS Sans Serif"
+long textcolor = 33554432
+boolean vscrollbar = true
+boolean autovscroll = true
+borderstyle borderstyle = stylelowered!
+end type
+
+type sle_archivopdf from singlelineedit within w_pr_rebaja_devolucion_sustento
+integer x = 50
+integer y = 900
+integer width = 1701
+integer height = 80
+integer taborder = 20
+integer textsize = -9
+integer weight = 400
+fontcharset fontcharset = ansi!
+fontpitch fontpitch = variable!
+fontfamily fontfamily = swiss!
+string facename = "MS Sans Serif"
+long textcolor = 33554432
+borderstyle borderstyle = stylelowered!
+end type
+
+type cb_adjuntar from commandbutton within w_pr_rebaja_devolucion_sustento
+integer x = 1801
+integer y = 892
+integer width = 402
+integer height = 100
+integer taborder = 30
+integer textsize = -9
+integer weight = 400
+fontcharset fontcharset = ansi!
+fontpitch fontpitch = variable!
+fontfamily fontfamily = swiss!
+string facename = "MS Sans Serif"
+string text = "Adjuntar PDF..."
+end type
+
+event clicked;/*==================================================================
+Evento: clicked del botón Adjuntar
+Propósito: Seleccionar archivo PDF
+==================================================================*/
+
+string ls_archivo, ls_ruta_completa, ls_extension
+integer li_resultado
+
+li_resultado = GetFileOpenName("Seleccione archivo PDF", ls_archivo, ls_ruta_completa, &
+	"", "Archivos PDF (*.pdf),*.pdf")
+
+IF li_resultado = 1 THEN
+	// Verificar extensión
+	ls_extension = Upper(Right(ls_ruta_completa, 4))
+	
+	IF ls_extension <> ".PDF" THEN
+		MessageBox("Advertencia", &
+			"Solo se permiten archivos PDF.~r~n~r~n" + &
+			"Archivo seleccionado: " + ls_archivo, &
+			Exclamation!)
+		RETURN
+	END IF
+	
+	// Asignar ruta
+	sle_archivopdf.Text = ls_ruta_completa
+	
+	MessageBox("Información", &
+		"Archivo seleccionado:~r~n~r~n" + ls_archivo, &
+		Information!)
+END IF
+
+end event
+
+type cb_aceptar from commandbutton within w_pr_rebaja_devolucion_sustento
+integer x = 59
+integer y = 1004
+integer width = 402
+integer height = 100
+integer taborder = 40
+boolean bringtotop = true
+integer textsize = -9
+integer weight = 700
+fontcharset fontcharset = ansi!
+fontpitch fontpitch = variable!
+fontfamily fontfamily = swiss!
+string facename = "MS Sans Serif"
+string text = "Aceptar"
+boolean default = true
+end type
+
+event clicked;/*==================================================================
+Evento: clicked del botón Aceptar
+Propósito: Validar y retornar datos
+==================================================================*/
+
+str_pass lstr_return
+
+// Validar sustento
+IF NOT wf_validar() THEN
+	RETURN
+END IF
+
+// Preparar datos de retorno
+lstr_return.s[1] = Trim(mle_descripcion.Text)
+lstr_return.s[2] = Trim(sle_archivopdf.Text)
+
+// Retornar y cerrar
+CloseWithReturn(Parent, lstr_return)
+
+end event
+
+type cb_cancelar from commandbutton within w_pr_rebaja_devolucion_sustento
+integer x = 475
+integer y = 1004
+integer width = 402
+integer height = 100
+integer taborder = 50
+boolean bringtotop = true
+integer textsize = -9
+integer weight = 400
+fontcharset fontcharset = ansi!
+fontpitch fontpitch = variable!
+fontfamily fontfamily = swiss!
+string facename = "MS Sans Serif"
+string text = "Cancelar"
+boolean cancel = true
+end type
+
+event clicked;// Cerrar sin retornar nada
+Close(Parent)
+end event
+
+type st_titulo from statictext within w_pr_rebaja_devolucion_sustento
+integer x = 50
+integer y = 32
+integer width = 2199
+integer height = 80
+integer textsize = -10
+integer weight = 700
+fontcharset fontcharset = ansi!
+fontpitch fontpitch = variable!
+fontfamily fontfamily = swiss!
+string facename = "MS Sans Serif"
+long textcolor = 8388608
+long backcolor = 12632256
+string text = "Sustento para: ANULACION"
+alignment alignment = center!
+boolean focusrectangle = false
+end type
+
+type st_descripcion from statictext within w_pr_rebaja_devolucion_sustento
+integer x = 50
+integer y = 132
+integer width = 2199
+integer height = 60
+integer textsize = -9
+integer weight = 400
+fontcharset fontcharset = ansi!
+fontpitch fontpitch = variable!
+fontfamily fontfamily = swiss!
+string facename = "MS Sans Serif"
+long textcolor = 33554432
+long backcolor = 12632256
+string text = "Descripción (mínimo 20 caracteres):"
+boolean focusrectangle = false
+end type
+
+type st_archivo from statictext within w_pr_rebaja_devolucion_sustento
+integer x = 50
+integer y = 832
+integer width = 800
+integer height = 60
+integer textsize = -9
+integer weight = 400
+fontcharset fontcharset = ansi!
+fontpitch fontpitch = variable!
+fontfamily fontfamily = swiss!
+string facename = "MS Sans Serif"
+long textcolor = 33554432
+long backcolor = 12632256
+string text = "Archivo PDF (opcional):"
+boolean focusrectangle = false
+end type
+

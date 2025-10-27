@@ -8,8 +8,8 @@ CREATE TABLE [dbo].[PR_RebajaDevolucionCab](
     [Empleado] [int] NOT NULL,
     [TipoRegistro] [char](1) NOT NULL, -- 'R'=REBAJA, 'D'=DEVOLUCION
     [Estado] [char](1) NOT NULL DEFAULT 'T', -- T=TRAMITE, C=CONSOLIDADA, R=CON RECTIFICATORIA, D=CON DEVOLUCION, A=ANULADA
-    [Descripcion] [varchar](500) NULL,
-    [ArchivoPDF] [varchar](255) NULL,
+    [DescripcionTramite] [varchar](500) NULL,
+    [ArchivoPDFTramite] [varchar](255) NULL,
     [TotalMonto] [money] NULL,
     [DiasTrabajadosOriginal] [int] NULL, -- D�as trabajados originales del empleado (para rec�lculo proporcional)
 
@@ -20,24 +20,26 @@ CREATE TABLE [dbo].[PR_RebajaDevolucionCab](
     -- Para CONSOLIDADA (solo Rebajas)
     [FechaConsolidacion] [datetime] NULL,
     [UsuarioConsolidacion] [char](20) NULL,
+	[DescripcionConsolidada] [varchar](500) NULL,    
     
     -- Para CON RECTIFICATORIA (solo Devoluciones)
     [FechaRectificatoria] [datetime] NULL,
-    [NumeroOrdenRectificatoria] [varchar](50) NULL,
-    [ObservacionRectificatoria] [varchar](500) NULL,
     [UsuarioRectificatoria] [char](20) NULL,
+	[DescripcionRectificatoria] [varchar](500) NULL,
+    [ArchivoPDFRectificatoria] [varchar](255) NULL,
     
     -- Para CON DEVOLUCION (solo Devoluciones)
     [FechaDevolucion] [datetime] NULL,
-    [NumeroNotaCredito] [varchar](50) NULL,
-    [ObservacionDevolucion] [varchar](500) NULL,
     [UsuarioDevolucion] [char](20) NULL,
+	[DescripcionDevolucion] [varchar](500) NULL,
+    [ArchivoPDFDevolucion] [varchar](255) NULL,
     
     -- Para ANULADA
-    [FechaAnulacion] [datetime] NULL,
-    [MotivoAnulacion] [varchar](500) NULL,
+    [FechaAnulacion] [datetime] NULL,    
     [UsuarioAnulacion] [char](20) NULL,
-    
+	[DescripcionAnulacion] [varchar](500) NULL,
+    [ArchivoPDFAnulacion] [varchar](255) NULL,
+
     -- Auditor�a - �ltima Modificaci�n
     [UltimoUsuario] [char](20) NULL,
     [UltimaFechaModif] [datetime] NULL,

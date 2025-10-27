@@ -5,7 +5,12 @@
       "Bash(dir \"c:\\Cristian\\Proyectos\\os-congreso\\CodigoFuenteTexto\\Datawindows\" /b)",
       "Bash(ren:*)",
       "Bash(git checkout:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(dir \"c:\\congreso-os-reb-dev\\CodigoFuenteTexto\\Datawindows\" /b)",
+      "Bash(findstr:*)",
+      "Bash(git log:*)",
+      "Bash(dir:*)",
+      "Bash(git fetch:*)"
     ],
     "deny": [],
     "ask": []
