@@ -10,7 +10,8 @@
       "Bash(findstr:*)",
       "Bash(git log:*)",
       "Bash(dir:*)",
-      "Bash(git fetch:*)"
+      "Bash(git fetch:*)",
+      "Bash(cmd /c \"dir c:\\congreso-os-reb-dev\\CodigoFuenteTexto\\Datawindows\\*filtrado*.txt /b\")"
     ],
     "deny": [],
     "ask": []
