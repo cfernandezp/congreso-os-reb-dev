@@ -1,0 +1,398 @@
+forward
+global type w_pr_boletas_por_empleado from w_windowbase
+end type
+type io_busqueda from uo_pr_busqueda within w_pr_boletas_por_empleado
+end type
+type dw_boleta_detalle from u_dw within w_pr_boletas_por_empleado
+end type
+type st_2 from statictext within w_pr_boletas_por_empleado
+end type
+type dw_list from u_dw_single within w_pr_boletas_por_empleado
+end type
+type cbx_activos from u_cbx within w_pr_boletas_por_empleado
+end type
+type dw_boleta_list from u_dw_single within w_pr_boletas_por_empleado
+end type
+type st_1 from statictext within w_pr_boletas_por_empleado
+end type
+type dw_position from datawindow within w_pr_boletas_por_empleado
+end type
+end forward
+
+global type w_pr_boletas_por_empleado from w_windowbase
+integer width = 3959
+integer height = 2204
+string title = "128 - Consulta de Boletas"
+boolean controlmenu = true
+boolean minbox = true
+boolean maxbox = true
+boolean resizable = true
+windowtype windowtype = main!
+io_busqueda io_busqueda
+dw_boleta_detalle dw_boleta_detalle
+st_2 st_2
+dw_list dw_list
+cbx_activos cbx_activos
+dw_boleta_list dw_boleta_list
+st_1 st_1
+dw_position dw_position
+end type
+global w_pr_boletas_por_empleado w_pr_boletas_por_empleado
+
+type variables
+string iv_sql
+
+DataWindowChild idwc_empleado, idwc_planilla
+end variables
+
+forward prototypes
+public subroutine wf_iniciar ()
+public subroutine wf_filtrar ()
+public subroutine wf_boleta_list ()
+public subroutine wf_boleta_detalle ()
+public subroutine wf_filtrar_boletas ()
+end prototypes
+
+public subroutine wf_iniciar ();dw_list. SetTransObject(SQLCA)
+dw_boleta_list. SetTransObject(SQLCA)
+dw_boleta_detalle. SetTransObject(SQLCA)
+dw_position. SetTransObject(SQLCA)
+
+iv_sql = dw_list.describe("datawindow.table.select")
+
+io_busqueda.uf_Init (dw_list, TRUE)
+io_busqueda.uf_SetField_codigo ("codigo")		
+io_busqueda.uf_SetField_nombre ("nombre")		
+io_busqueda.dw_tipo.Enabled = False
+
+dw_position.getchild("empleado",idwc_empleado)
+idwc_empleado. SetTransObject(SQLCA)
+dw_position.getchild("tipoplanilla",idwc_planilla)
+idwc_planilla. SetTransObject(SQLCA)
+dw_position.insertrow(0)
+
+X=0
+Y=0
+
+// Resize
+io_resize.uf_Register( dw_list, 6)
+io_resize.uf_Register( dw_position, 5)
+io_resize.uf_Register( dw_boleta_list, 5)
+io_resize.uf_Register( dw_boleta_detalle, 7)
+
+dw_list.retrieve()
+end subroutine
+
+public subroutine wf_filtrar ();string w$_filtro
+
+if cbx_activos.checked then
+	w$_filtro = "Estado = '0'"
+else
+	w$_filtro = ""
+end if	
+
+dw_list.setfilter(w$_filtro)
+dw_list.filter()
+
+
+end subroutine
+
+public subroutine wf_boleta_list ();long w%_empleado, w%_row
+string w$_nombre
+
+w%_row = dw_list.getrow()
+
+w%_empleado = f_nonulo(dw_list.object.codigo[w%_row])
+f_insert_log_auditoria('N4','','','','CO',+ '|' + this.title + '|' + dw_list.Classname() + '|' + '-' + '|' + string(w%_empleado) + '-' + dw_list.getitemstring(dw_list.getrow(),"nombre") ,dw_list, this.Classname()  ) 
+
+//dw_boleta_detalle.reset()
+if w%_empleado > 0 then
+	w$_nombre = f_nonulo_str(dw_list.object.nombre[w%_row])
+	dw_boleta_list.retrieve(w%_empleado,str_global.gv_userid)
+     dw_boleta_list.SelectRow(0, false)	
+	dw_position.reset()
+	dw_boleta_list.setfilter("")
+	dw_boleta_list.filter()
+	idwc_empleado.retrieve(w%_empleado)
+	idwc_planilla.retrieve(w%_empleado)
+	dw_position.InsertRow(0)
+	dw_position.Modify("t_empleado.text = '"+w$_nombre+"' ")
+	if dw_boleta_list.rowcount() > 0 then 
+		dw_position.enabled = True
+		dw_position.setitem( 1, 'empleado', idwc_empleado.getitemnumber(1,'empleado') )
+		dw_position.setitem( 1, 'tipoplanilla', idwc_planilla.getitemstring(1,'tipoplanilla') )
+	else
+		dw_position.enabled = False
+		dw_boleta_detalle.reset()
+	end if	
+	
+end if	
+
+
+end subroutine
+
+public subroutine wf_boleta_detalle ();long w%_empleado, w%_row
+string w$_companiasocio, w$_periodo, w$_tipoplanilla, w$_tipoproceso
+
+//w%_row = f_nonulo(dw_boleta_list.getrow())
+w%_row = f_nonulo(dw_boleta_list.GetSelectedRow(0))
+
+
+if w%_row > 0 then
+
+	w%_empleado = f_nonulo(dw_boleta_list.object.empleado[w%_row])
+	
+	if w%_empleado > 0 then
+		
+		w$_companiasocio	= dw_boleta_list.object.companiasocio[w%_row]
+		w$_periodo			= dw_boleta_list.object.periodo[w%_row]
+		w$_tipoplanilla	= dw_boleta_list.object.tipoplanilla[w%_row]
+		w$_tipoproceso		= dw_boleta_list.object.tipoproceso[w%_row]
+		
+		//f_msg(w$_companiasocio + ' ' + w$_periodo + ' ' + w$_tipoplanilla + ' ' + w$_tipoproceso + ' ' + string(w%_empleado))
+		f_insert_log_auditoria('N4','','','','CO',+ '|' + this.title + '|' + dw_boleta_list.Classname() + '|' + '-' + '|' + 'per:' + string(w$_periodo) + '-tippla:' + w$_tipoplanilla + '-tippro:' + w$_tipoproceso + '-emp: ' + string(w%_empleado)  ,dw_boleta_list, this.Classname()  ) 
+		dw_boleta_detalle.retrieve(w$_periodo, w$_tipoplanilla, w$_tipoproceso,w%_empleado,w$_companiasocio)
+	end if	
+
+end if
+end subroutine
+
+public subroutine wf_filtrar_boletas ();string ls_allEmpleado, ls_allTipoPlanilla, ls_TipoPlanilla, ls_filtro
+long ll_empleado
+
+dw_position.accepttext()
+
+ls_allEmpleado			= dw_position.getitemstring( 1, 'allempleado')
+ll_empleado				= dw_position.getitemnumber( 1, 'empleado')
+ls_allTipoPlanilla	= dw_position.getitemstring( 1, 'alltipoplanilla')
+ls_TipoPlanilla		= dw_position.getitemstring( 1, 'tipoplanilla')
+
+ls_filtro = '1=1'
+if ls_allEmpleado = 'S' and ls_allTipoPlanilla = 'S' Then
+	ls_filtro = ''
+else
+	if ls_allEmpleado = 'N' then 
+		ls_filtro += ' and empleado = ' + string(ll_empleado)
+	end if
+	
+	if ls_allTipoPlanilla = 'N' then 
+		ls_filtro += ' and tipoplanilla = "' + ls_TipoPlanilla + '" '
+	end if
+End If
+
+dw_boleta_list.setfilter(ls_filtro)
+dw_boleta_list.filter()
+end subroutine
+
+event objectstartevent;call super::objectstartevent;CHOOSE CASE eventname
+CASE 'opened'	
+	wf_iniciar()
+	wf_filtrar()
+	//io_busqueda.setfocus()
+	//io_busqueda.sle_busqueda.setfocus()
+	//dw_list.SelectRow(15, true)
+	//dw_list.reset()
+//	setfocus(io_busqueda)
+	
+CASE 'cbx_activos_clicked'
+	wf_filtrar()	
+	
+CASE 'dw_list_doubleclicked'
+	dw_boleta_detalle.reset()
+	wf_boleta_list()
+	
+//			/* AGREGAR TRAMA ---DESPUES DE CARGAR EL DW->*/
+//		string ls_dateTimeString1, ls_selloAgua1
+//		
+//		ls_dateTimeString1 = String(f_today(),"dd/mm/yyyy hh:mm")
+//		ls_selloAgua1 = str_global.gv_userid + " - " + ls_dateTimeString1
+//		
+//		f_agregar_tramado_dw(dw_boleta_list,ls_selloAgua1,'P')
+//		/*<-------------*/
+	
+//CASE 'dw_boleta_list_rowfocuschanged', 'dw_boleta_list_clicked'
+CASE 'dw_boleta_list_clicked' //'dw_boleta_list_rowfocuschanged' //, 
+		wf_boleta_detalle()
+          
+
+		/* AGREGAR TRAMA ---DESPUES DE CARGAR EL DW->*/
+		string ls_dateTimeString, ls_selloAgua
+		
+		ls_dateTimeString = String(f_today(),"dd/mm/yyyy hh:mm")
+		ls_selloAgua = str_global.gv_userid + " - " + ls_dateTimeString
+		
+		f_agregar_tramado_dw(dw_boleta_detalle,ls_selloAgua,'L')
+		/*<-------------*/
+END CHOOSE
+end event
+
+on w_pr_boletas_por_empleado.create
+int iCurrent
+call super::create
+this.io_busqueda=create io_busqueda
+this.dw_boleta_detalle=create dw_boleta_detalle
+this.st_2=create st_2
+this.dw_list=create dw_list
+this.cbx_activos=create cbx_activos
+this.dw_boleta_list=create dw_boleta_list
+this.st_1=create st_1
+this.dw_position=create dw_position
+iCurrent=UpperBound(this.Control)
+this.Control[iCurrent+1]=this.io_busqueda
+this.Control[iCurrent+2]=this.dw_boleta_detalle
+this.Control[iCurrent+3]=this.st_2
+this.Control[iCurrent+4]=this.dw_list
+this.Control[iCurrent+5]=this.cbx_activos
+this.Control[iCurrent+6]=this.dw_boleta_list
+this.Control[iCurrent+7]=this.st_1
+this.Control[iCurrent+8]=this.dw_position
+end on
+
+on w_pr_boletas_por_empleado.destroy
+call super::destroy
+destroy(this.io_busqueda)
+destroy(this.dw_boleta_detalle)
+destroy(this.st_2)
+destroy(this.dw_list)
+destroy(this.cbx_activos)
+destroy(this.dw_boleta_list)
+destroy(this.st_1)
+destroy(this.dw_position)
+end on
+
+type io_busqueda from uo_pr_busqueda within w_pr_boletas_por_empleado
+integer x = 37
+integer y = 36
+integer width = 1294
+integer taborder = 10
+boolean border = false
+end type
+
+on io_busqueda.destroy
+call uo_pr_busqueda::destroy
+end on
+
+type dw_boleta_detalle from u_dw within w_pr_boletas_por_empleado
+integer x = 1838
+integer y = 1284
+integer width = 2048
+integer height = 780
+integer taborder = 50
+boolean bringtotop = true
+string dataobject = "dw_pr_boleta_individual"
+boolean hscrollbar = true
+boolean vscrollbar = true
+borderstyle borderstyle = stylelowered!
+end type
+
+type st_2 from statictext within w_pr_boletas_por_empleado
+integer x = 1838
+integer y = 1220
+integer width = 594
+integer height = 60
+boolean bringtotop = true
+integer textsize = -8
+integer weight = 700
+fontcharset fontcharset = ansi!
+fontpitch fontpitch = variable!
+fontfamily fontfamily = swiss!
+string facename = "Arial"
+long backcolor = 12632256
+boolean enabled = false
+string text = "Detalle de la Boleta"
+boolean focusrectangle = false
+end type
+
+type dw_list from u_dw_single within w_pr_boletas_por_empleado
+integer x = 18
+integer y = 140
+integer width = 1778
+integer height = 1920
+integer taborder = 20
+boolean bringtotop = true
+string dataobject = "dw_hr_empleado_list"
+boolean vscrollbar = true
+borderstyle borderstyle = stylelowered!
+end type
+
+type cbx_activos from u_cbx within w_pr_boletas_por_empleado
+integer x = 1349
+integer y = 52
+integer width = 443
+integer height = 60
+boolean bringtotop = true
+integer textsize = -8
+fontcharset fontcharset = ansi!
+string facename = "Arial"
+long backcolor = 553648127
+string text = "Solo Activos"
+boolean checked = true
+borderstyle borderstyle = styleraised!
+end type
+
+type dw_boleta_list from u_dw_single within w_pr_boletas_por_empleado
+integer x = 1838
+integer y = 244
+integer width = 2048
+integer height = 960
+integer taborder = 30
+boolean bringtotop = true
+string dataobject = "dw_pr_boleta_list_por_empleado"
+boolean hscrollbar = true
+boolean vscrollbar = true
+borderstyle borderstyle = stylelowered!
+end type
+
+type st_1 from statictext within w_pr_boletas_por_empleado
+integer x = 23
+integer y = 20
+integer width = 1778
+integer height = 120
+integer textsize = -8
+integer weight = 400
+fontcharset fontcharset = ansi!
+fontpitch fontpitch = variable!
+fontfamily fontfamily = swiss!
+string facename = "Arial"
+long textcolor = 8388608
+long backcolor = 30593746
+boolean border = true
+borderstyle borderstyle = styleraised!
+boolean focusrectangle = false
+end type
+
+type dw_position from datawindow within w_pr_boletas_por_empleado
+integer x = 1838
+integer y = 20
+integer width = 2048
+integer height = 212
+integer taborder = 40
+boolean enabled = false
+string title = "none"
+string dataobject = "dw_pr_rep_128_position"
+boolean livescroll = true
+borderstyle borderstyle = styleraised!
+end type
+
+event itemchanged;//long ll_null
+//setnull(ll_null)
+//
+//Choose Case dwo.name
+//	Case 'allempleado'
+//		if data = 'S' then 
+//			setitem( row, 'empleado', ll_null )
+//		end if
+//	Case 'alltipoplanilla'
+//		if data = 'S' then 
+//			setitem( row, 'Tipoplanilla', str_global.gv_null_string )
+//		end if
+//End Choose
+
+Choose Case dwo.name
+	Case 'allempleado','alltipoplanilla','empleado','tipoplanilla'
+		if row > 0 then 
+			Post wf_filtrar_boletas()
+		end if
+End Choose
+end event
+

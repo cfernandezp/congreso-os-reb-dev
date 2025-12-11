@@ -1,0 +1,539 @@
+forward
+global type w_pr_rep_557_consolidado_rebajas from w_windowbase
+end type
+type cbx_1 from checkbox within w_pr_rep_557_consolidado_rebajas
+end type
+type sle_1 from singlelineedit within w_pr_rep_557_consolidado_rebajas
+end type
+type st_estado_proceso from statictext within w_pr_rep_557_consolidado_rebajas
+end type
+type uo_filtro1 from uo_filtro within w_pr_rep_557_consolidado_rebajas
+end type
+type pb_empleado from u_pb within w_pr_rep_557_consolidado_rebajas
+end type
+type uo_toolbar from uo_toolbar_reporte within w_pr_rep_557_consolidado_rebajas
+end type
+type cb_buscar from u_cb within w_pr_rep_557_consolidado_rebajas
+end type
+type cbx_cesado from checkbox within w_pr_rep_557_consolidado_rebajas
+end type
+type uo_filtro1_2 from uo_filtro_empleado_ccosto within w_pr_rep_557_consolidado_rebajas
+end type
+type cb_empleado from u_cb within w_pr_rep_557_consolidado_rebajas
+end type
+type dw_position from datawindow within w_pr_rep_557_consolidado_rebajas
+end type
+type dw_reporte from u_dw within w_pr_rep_557_consolidado_rebajas
+end type
+end forward
+
+global type w_pr_rep_557_consolidado_rebajas from w_windowbase
+integer x = 9
+integer y = 388
+integer width = 3168
+integer height = 1716
+string title = "557 - Consolidado de Rebajas"
+boolean controlmenu = true
+boolean minbox = true
+boolean maxbox = true
+boolean resizable = true
+windowtype windowtype = child!
+cbx_1 cbx_1
+sle_1 sle_1
+st_estado_proceso st_estado_proceso
+uo_filtro1 uo_filtro1
+pb_empleado pb_empleado
+uo_toolbar uo_toolbar
+cb_buscar cb_buscar
+cbx_cesado cbx_cesado
+uo_filtro1_2 uo_filtro1_2
+cb_empleado cb_empleado
+dw_position dw_position
+dw_reporte dw_reporte
+end type
+global w_pr_rep_557_consolidado_rebajas w_pr_rep_557_consolidado_rebajas
+
+type variables
+String iv_sql_original, is$_selectcostcenter
+
+Datawindowchild dwc_acta
+
+
+
+end variables
+
+forward prototypes
+public subroutine wf_iniciar ()
+public subroutine wf_prepare_sql ()
+public subroutine wf_actualizar_estado_periodo ()
+public function string wf_sql_ruta_sello ()
+end prototypes
+
+public subroutine wf_iniciar ();dw_reporte.settransobject(sqlca)
+//dw_position.settransobject(sqlca)
+
+//dw_position.getchild( 'acta', dwc_acta)
+//dwc_acta.settransobject(sqlca)
+
+//dw_position.insertrow(0)
+
+iv_sql_original = dw_reporte.describe('datawindow.table.select')
+
+dw_print = dw_reporte
+
+uo_toolbar.uf_config(This)
+uo_toolbar.uf_setdw( dw_reporte)
+
+io_resize.uf_register(uo_toolbar, 5)
+io_resize.uf_register(dw_position, 5)
+io_resize.uf_register(dw_reporte, 7)
+
+
+dw_reporte.object.datawindow.print.preview=True
+
+
+// 
+uo_filtro1.uf_Visible ( "AllAFE", FALSE )
+uo_filtro1.uf_Visible ( "AFE", FALSE )
+uo_filtro1.uf_Visible ( "AllCentroCosto", FALSE )
+uo_filtro1.uf_Visible ( "CentroCosto", FALSE )
+uo_filtro1.uf_Visible ( "CentroCosto", FALSE )
+uo_filtro1.uf_Protect ( "AllPeriodo", FALSE )
+uo_filtro1.uf_Visible ( "AllTipoProceso", FALSE )
+uo_filtro1.uf_Visible ( "tipoproceso", FALSE )
+
+
+
+//uo_filtro1.dw_filtro.SetItem ( 1, "Compania", str_global.gv_companyowner )
+uo_filtro1.dw_filtro.SetItem ( 1, "AllCompania", "N" )
+uo_filtro1.dw_filtro.SetItem ( 1, "AllPeriodo", "N" )
+
+//uo_filtro1.cb_filtrar.Y = 90
+
+
+//uo_filtro1.uf_Protect ("AllTipoProceso", TRUE)
+uo_filtro1.uf_Protect ("AllCompania", TRUE)
+//uo_filtro1.uf_Protect ("AllTipoPlanilla", TRUE)
+uo_filtro1.uf_Protect ("AllPeriodo", TRUE)
+//dw_filtro
+uo_filtro1.dw_filtro.SetItem ( 1, "TipoPlanilla", "EM" )
+uo_filtro1.uf_set_filtro_periodo_field( "TipoPlanilla", "EM" )	
+uo_filtro1.uf_set_filtro_periodo()
+
+uo_filtro1.uf_Visible ( "alltipoplanilla", FALSE )
+uo_filtro1.uf_Visible ( "tipoplanilla", FALSE )
+//uo_filtro1.uf_set_filtro_periodo()	
+
+end subroutine
+
+public subroutine wf_prepare_sql ();String ls_periodo
+string ls_filtro
+string ls_modify_result
+string ls_current_nested
+
+// Configurar modo de preview
+dw_reporte.modify('datawindow.print.preview = yes')
+
+// Aceptar cambios del filtro
+uo_filtro1.dw_filtro.AcceptText()
+
+// Obtener el periodo
+ls_periodo = uo_filtro1.uf_Get_Periodo()
+
+wf_actualizar_estado_periodo()
+
+
+
+integer a
+
+dw_reporte.SetRedraw(FALSE)
+for a = 1 to 2
+	dw_reporte.reset()
+	// ========================================
+// DETERMINAR FILTRO SEGÚN CHECKBOX Y CAMBIAR NESTED
+// ========================================
+IF cbx_1.Checked THEN
+    // CHECKBOX MARCADO: MOSTRAR TODOS LOS CONCEPTOS (incluir AFP)
+    ls_filtro = ""    
+    // Verificar si ya tiene el dataobject correcto
+    ls_current_nested = dw_reporte.Describe("dw_1.dataobject")
+    IF ls_current_nested <> "dw_pr_rep_557_rebaja_total_concepto" THEN
+        ls_modify_result = dw_reporte.Modify("dw_1.dataobject='dw_pr_rep_557_rebaja_total_concepto'")
+    END IF   
+	 dw_reporte.SetTransObject(SQLCA)
+	 dw_reporte.Retrieve(ls_periodo)
+	 dw_reporte.SetFilter(ls_filtro)
+	 dw_reporte.Filter()
+ELSE
+    // CHECKBOX NO MARCADO: NO MOSTRAR AFP (excluir 5210, 5240, 5250)
+    ls_filtro = "concepto NOT IN ('5210', '5240', '5250')"    
+    // Verificar si ya tiene el dataobject correcto
+    ls_current_nested = dw_reporte.Describe("dw_1.dataobject")
+    IF ls_current_nested <> "dw_pr_rep_557_rebaja_total_concepto_filtrado" THEN
+        ls_modify_result = dw_reporte.Modify("dw_1.dataobject='dw_pr_rep_557_rebaja_total_concepto_filtrado'")
+    END IF  
+	 
+	 dw_reporte.SetTransObject(SQLCA)
+	 dw_reporte.Retrieve(ls_periodo)
+	 dw_reporte.SetFilter(ls_filtro)
+	 dw_reporte.Filter()
+END IF
+	
+end for
+
+// Sello
+if dw_reporte.rowcount( )>0 then
+	dw_reporte.Modify('p_sello.visible=true')
+	dw_reporte.Modify('p_sello.filename="'+wf_sql_ruta_sello()+'"')
+else
+	dw_reporte.Modify('p_sello.visible=false')
+end if
+
+dw_reporte.SetRedraw(TRUE)
+end subroutine
+
+public subroutine wf_actualizar_estado_periodo ();String ls_periodo
+String ls_periodo_convertido
+String ls_estado
+
+// Obtener el periodo del filtro
+ls_periodo = uo_filtro1.uf_Get_Periodo()
+
+// Validar que hay periodo
+if IsNull(ls_periodo) or ls_periodo = '' then
+	st_estado_proceso.text = ''
+	return
+end if
+
+// Convertir formato de '20251111' a '2025-11'
+// Extraer año (primeros 4 caracteres) y mes (caracteres 5-6)
+ls_periodo_convertido = Left(ls_periodo, 4) + '-' + Mid(ls_periodo, 5, 2)
+
+// Consulta directa con embedded SQL
+SELECT estado
+INTO :ls_estado
+FROM PR_PlanillaPeriodo_Rebaja_Devolucion
+WHERE periodo = :ls_periodo_convertido
+USING SQLCA;
+
+// Validar el resultado de la consulta
+if SQLCA.SQLCode = 0 then
+	sle_1.text = ls_estado
+elseif SQLCA.SQLCode = 100 then
+	// No se encontró registro
+	sle_1.text = 'Periodo sin estado'
+else
+	// Error en la consulta
+	sle_1.text = 'Error al consultar estado'
+end if
+end subroutine
+
+public function string wf_sql_ruta_sello ();String ls_nameimage,ls_ruta
+
+ls_ruta=f_sql_read_parametrosmast_$_explicacion("PR", "999999", "RUTASELLO")
+
+SELECT top 1 PR_SellosBoleta.Archivo  into :ls_nameimage
+	FROM PR_SellosBoleta
+	where Cargo='JR'and PeriodoFin is null
+	order by PeriodoIni desc
+	using sqlca;
+	 
+return ls_ruta + ls_nameimage
+end function
+
+on w_pr_rep_557_consolidado_rebajas.create
+int iCurrent
+call super::create
+this.cbx_1=create cbx_1
+this.sle_1=create sle_1
+this.st_estado_proceso=create st_estado_proceso
+this.uo_filtro1=create uo_filtro1
+this.pb_empleado=create pb_empleado
+this.uo_toolbar=create uo_toolbar
+this.cb_buscar=create cb_buscar
+this.cbx_cesado=create cbx_cesado
+this.uo_filtro1_2=create uo_filtro1_2
+this.cb_empleado=create cb_empleado
+this.dw_position=create dw_position
+this.dw_reporte=create dw_reporte
+iCurrent=UpperBound(this.Control)
+this.Control[iCurrent+1]=this.cbx_1
+this.Control[iCurrent+2]=this.sle_1
+this.Control[iCurrent+3]=this.st_estado_proceso
+this.Control[iCurrent+4]=this.uo_filtro1
+this.Control[iCurrent+5]=this.pb_empleado
+this.Control[iCurrent+6]=this.uo_toolbar
+this.Control[iCurrent+7]=this.cb_buscar
+this.Control[iCurrent+8]=this.cbx_cesado
+this.Control[iCurrent+9]=this.uo_filtro1_2
+this.Control[iCurrent+10]=this.cb_empleado
+this.Control[iCurrent+11]=this.dw_position
+this.Control[iCurrent+12]=this.dw_reporte
+end on
+
+on w_pr_rep_557_consolidado_rebajas.destroy
+call super::destroy
+destroy(this.cbx_1)
+destroy(this.sle_1)
+destroy(this.st_estado_proceso)
+destroy(this.uo_filtro1)
+destroy(this.pb_empleado)
+destroy(this.uo_toolbar)
+destroy(this.cb_buscar)
+destroy(this.cbx_cesado)
+destroy(this.uo_filtro1_2)
+destroy(this.cb_empleado)
+destroy(this.dw_position)
+destroy(this.dw_reporte)
+end on
+
+event objectstartevent;call super::objectstartevent;
+CHOOSE CASE eventname
+	CASE "opened"
+		wf_iniciar()
+	
+	CASE 'cb_filtrar_clicked'
+		wf_prepare_sql()	
+	
+	CASE "cb_buscar_clicked"
+		wf_prepare_sql()
+
+	
+	CASE "cb_empleado_clicked","pb_empleado_clicked"
+		str_pass str_parm
+	
+		str_parm.po[1] = this
+		str_parm.s[1] = 'E'
+		
+		if not isvalid(w_ma_persona_select) then
+			openwithparm(w_ma_persona_select, str_parm)
+		else
+			w_ma_persona_select.show()
+		end if
+	
+	CASE "persona_selected"
+	
+		dw_position.setitem(1,"empleado",str_global.gv_number_selected)
+		
+		if isvalid(w_ma_persona_select) then 
+			w_ma_persona_select.hide()
+		end if
+		
+	CASE "closed"
+		
+		if isvalid(w_ma_persona_select) then 
+			close(w_ma_persona_select )
+		end if
+	
+END CHOOSE
+end event
+
+type cbx_1 from checkbox within w_pr_rep_557_consolidado_rebajas
+integer x = 1115
+integer y = 160
+integer width = 677
+integer height = 64
+integer textsize = -8
+integer weight = 400
+fontcharset fontcharset = ansi!
+fontpitch fontpitch = variable!
+fontfamily fontfamily = swiss!
+string facename = "MS Sans Serif"
+long textcolor = 8388608
+long backcolor = 12632256
+string text = "Mostrar conceptos AFP"
+boolean lefttext = true
+end type
+
+type sle_1 from singlelineedit within w_pr_rep_557_consolidado_rebajas
+integer x = 1422
+integer y = 236
+integer width = 741
+integer height = 56
+integer taborder = 30
+integer textsize = -8
+integer weight = 400
+fontcharset fontcharset = ansi!
+fontpitch fontpitch = variable!
+fontfamily fontfamily = swiss!
+string facename = "MS Sans Serif"
+long textcolor = 33554432
+long backcolor = 16777215
+boolean border = false
+boolean displayonly = true
+borderstyle borderstyle = stylelowered!
+end type
+
+type st_estado_proceso from statictext within w_pr_rep_557_consolidado_rebajas
+integer x = 1120
+integer y = 236
+integer width = 293
+integer height = 68
+integer textsize = -8
+integer weight = 400
+fontcharset fontcharset = ansi!
+fontpitch fontpitch = variable!
+fontfamily fontfamily = swiss!
+string facename = "MS Sans Serif"
+long textcolor = 8388608
+long backcolor = 12632256
+string text = "Estado"
+boolean focusrectangle = false
+end type
+
+type uo_filtro1 from uo_filtro within w_pr_rep_557_consolidado_rebajas
+integer y = 136
+integer height = 176
+integer taborder = 20
+boolean border = false
+end type
+
+on uo_filtro1.destroy
+call uo_filtro::destroy
+end on
+
+type pb_empleado from u_pb within w_pr_rep_557_consolidado_rebajas
+boolean visible = false
+integer x = 1449
+integer y = 348
+integer width = 91
+integer height = 72
+integer taborder = 50
+boolean enabled = false
+string text = ""
+string picturename = "Buscar.png"
+string disabledname = "Buscar_disabled.png"
+string powertiptext = "Seleccionar Empleado"
+end type
+
+type uo_toolbar from uo_toolbar_reporte within w_pr_rep_557_consolidado_rebajas
+integer x = 18
+integer y = 20
+integer width = 3072
+integer taborder = 40
+boolean border = false
+end type
+
+on uo_toolbar.destroy
+call uo_toolbar_reporte::destroy
+end on
+
+type cb_buscar from u_cb within w_pr_rep_557_consolidado_rebajas
+boolean visible = false
+integer x = 1545
+integer y = 344
+integer width = 320
+integer height = 92
+boolean bringtotop = true
+integer weight = 400
+string facename = "Arial"
+string text = "Consultar"
+end type
+
+type cbx_cesado from checkbox within w_pr_rep_557_consolidado_rebajas
+boolean visible = false
+integer x = 1376
+integer y = 112
+integer width = 434
+integer height = 84
+boolean bringtotop = true
+integer textsize = -8
+integer weight = 400
+fontcharset fontcharset = ansi!
+fontpitch fontpitch = variable!
+fontfamily fontfamily = swiss!
+string facename = "Arial"
+long textcolor = 33554432
+long backcolor = 12632256
+string text = "Incluir Cesados"
+end type
+
+type uo_filtro1_2 from uo_filtro_empleado_ccosto within w_pr_rep_557_consolidado_rebajas
+boolean visible = false
+integer x = 9
+integer y = 268
+integer width = 1289
+integer height = 128
+integer taborder = 40
+boolean border = false
+end type
+
+on uo_filtro1_2.destroy
+call uo_filtro_empleado_ccosto::destroy
+end on
+
+type cb_empleado from u_cb within w_pr_rep_557_consolidado_rebajas
+boolean visible = false
+integer x = 1586
+integer y = 352
+integer width = 82
+integer height = 68
+integer taborder = 40
+boolean bringtotop = true
+integer weight = 400
+fontcharset fontcharset = ansi!
+boolean enabled = false
+string text = "..."
+end type
+
+type dw_position from datawindow within w_pr_rep_557_consolidado_rebajas
+boolean visible = false
+integer x = 18
+integer y = 340
+integer width = 3072
+integer height = 112
+integer taborder = 40
+string dataobject = "dw_pr_rep_311_acta_cta_cts_position"
+boolean livescroll = true
+borderstyle borderstyle = styleraised!
+end type
+
+event itemchanged;long ll_null
+
+setnull(ll_null)
+
+Choose Case dwo.name
+	Case "allempleado"
+		if data = "S" then
+			SetItem (1, "empleado", ll_null)
+			cb_empleado.enabled = False
+			pb_empleado.enabled = False
+		else
+			cb_empleado.enabled = True
+			pb_empleado.enabled = True
+			pb_empleado.event clicked( )
+		end if
+	
+	Case "allmemo"
+		if data = "S" then
+			SetItem (1, "memo", ll_null)
+			SetItem (1, "allacta", 'S')
+			SetItem (1, "acta", ll_null)
+		end if
+
+	Case "allacta"
+		if data = "S" then
+			SetItem (1, "acta", ll_null)
+			dwc_acta.reset()
+		end if
+		
+	Case "memo"
+		SetItem (1, "acta", ll_null)
+		if not isnull(data) then dwc_acta.retrieve(long(data))
+
+End Choose
+end event
+
+type dw_reporte from u_dw within w_pr_rep_557_consolidado_rebajas
+integer x = 18
+integer y = 340
+integer width = 3072
+integer height = 1224
+integer taborder = 30
+boolean bringtotop = true
+string dataobject = "dw_pr_rep_557_rebaja"
+boolean hscrollbar = true
+boolean vscrollbar = true
+borderstyle borderstyle = stylelowered!
+end type
+

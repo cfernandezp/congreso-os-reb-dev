@@ -1,0 +1,70 @@
+Documento de Análisis de Requerimientos
+
+Primera Funcionalidad: Control de Periodos
+Agregar en la opción procesos un ítem Estado-Periodo que abrirá una ventana sencilla donde podamos ver y cambiar el estado de cada periodo (mes). Básicamente necesitamos guardar esta información:
+•	Periodo: El mes que estamos registrando (por ejemplo: 2025-09)
+•	Estado: Si está en PROCESO o CERRADO
+•	Fecha de cierre: Cuándo se cerró el periodo (solo cuando está cerrado)
+•	Datos de auditoría: Quién lo creó, cuándo, última modificación (usuario creación, fecha creación, usuario modificación, fecha modificación).
+
+Al inicio del mes:
+Cuando empieza el mes (digamos septiembre), alguien del área crea el periodo "2025-09" y automáticamente queda en estado PROCESO. Esto significa que el mes está abierto y podemos hacer rebajas.
+Al final del mes:
+Cuando ya se pagaron todos los tributos a SUNAT y se cierra el periodo contable, el encargado cambia el estado a CERRADO. El sistema guarda automáticamente la fecha de cierre. A partir de ese momento ya no se pueden hacer rebajas, solo devoluciones.
+Reglas importantes
+•	No puede haber dos registros del mismo periodo (no podemos tener dos "2025-09").
+•	Una vez que un periodo está CERRADO y tiene rebajas consolidadas, ya no se puede volver a abrir.
+•	El formato debe ser siempre año-mes (YYYY-MM).
+
+Segunda Funcionalidad: Registro de Ajustes
+¿Cómo se ingresa?
+El flujo sería así:
+1. El usuario entra al módulo de Boletas de Pago (el que ya existe)
+2. Busca la boleta que necesita ajustar usando los filtros normales:
+- Periodo (ejemplo: 2025-09)
+- Planilla (ejemplo: 001 - Empleados)
+- Proceso (ejemplo: Fin de mes)
+3. El DataWindow muestra la lista de boletas. 
+4. NUEVO: Se agrega una columna adicional al final del DataWindow con un botón por cada fila.
+5. El usuario busca la boleta que necesita ajustar en la lista.
+6. Le da click al botón de la fila correspondiente (puede decir "Ajuste", "R/D" o tener un ícono).
+7. Se abre una nueva ventana con los conceptos de esa boleta específica
+Aquí se ve la información de la boleta seleccionada, todo en modo solo lectura:
+•	Periodo.
+•	Planilla.
+•	Proceso.
+•	Datos del trabajador.
+
+El sistema calcula automáticamente si es REBAJA o DEVOLUCIÓN (según el estado del periodo)
+Los conceptos
+Se muestra una grilla (tabla) con TODOS los conceptos que tiene esa boleta. Solo los tipos ingresos, descuentos, aportes.
+Todos estos conceptos aparecen en la grilla. Cada fila tiene:
+•	Código del concepto: Por ejemplo 0101, 0105, etc.
+•	Nombre del concepto: Básico, Asignación Familiar, etc.
+•	Monto DICE: El monto que actualmente tiene en la boleta (este no se puede cambiar)
+•	Monto DEBE DECIR: 
+
+Sustento
+Todo ajuste tiene que tener una justificación. Aquí el usuario explica por qué está haciendo el cambio:
+•	Descripción: Un campo de texto donde escribe la explicación
+•	Archivo PDF: Un botón para adjuntar un documento (puede ser una ficha, un certificado, una resolución, etc.)
+Validaciones importantes
+•	Tiene que llenar el DEBE DECIR: El campo DEBE DECIR no debe ser vacío, el sistema no lo deja grabar. Mensaje: "Debe ingresar el monto DEBE DECIR para el concepto".
+•	El DEBE DECIR siempre tiene que ser MENOR que el DICE: Esta es la regla más importante. Estamos hablando de rebajas y devoluciones, o sea, estamos corrigiendo porque cobramos de más. El nuevo monto SIEMPRE tiene que ser menor al original.
+•	Siempre tiene que haber sustento: No se puede grabar sin explicar por qué se está haciendo el ajuste. El usuario tiene que escribir algo en el campo de descripción O adjuntar un PDF O ambas cosas. Si no pone nada, el sistema dice: "Debe ingresar un sustento textual o adjuntar un archivo PDF".
+La descripción además tiene que tener un mínimo de caracteres (digamos 20) para evitar que pongan cosas como "error" o "ok".
+Otras validaciones
+•	No duplicar ajustes.
+•	No puede haber dos ajustes en estado TRAMITE para el mismo concepto de la misma boleta. 
+•	Validar que el periodo exista (Años precargados desde 2020 - nacen con estado PROCESO).
+•	Antes de grabar, el sistema verifica que el periodo esté registrado en la tabla de periodos. Si no existe, pide que primero lo creen.
+Estados de los registros
+Para las REBAJAS pasan por estos estados:
+•	TRAMITE: Es el estado inicial. Significa que la rebaja está registrada pero todavía no se aplicó. Mientras esté en TRAMITE, se puede modificar o anular sin problemas.
+•	CONSOLIDADA: Cuando se cierra el periodo (fin de mes), todas las rebajas que están en TRAMITE pasan automáticamente a CONSOLIDADAS. Ya no se pueden modificar ni anular. Estas rebajas ya se consideran aplicadas y se usan para generar el archivo PLAME.
+•	ANULADA: Si nos equivocamos al registrar una rebaja y está en TRAMITE, podemos anularla. Una rebaja anulada ya no se va a aplicar nunca, pero queda en el sistema como histórico.
+Para las DEVOLUCIONES tienen más estados porque el proceso es más largo.
+•	TRAMITE: Estado inicial. La devolución está registrada pero todavía no se hizo nada. Se puede modificar o anular.
+•	CON RECTIFICATORIA: El área contable ya presentó el PDT PLAME rectificado ante SUNAT. Cuando hacen esto, actualizan el registro poniendo la fecha y el número de orden. El sistema cambia automáticamente el estado. (sustento fecha y observación)
+•	CON DEVOLUCION: SUNAT ya procesó todo y devolvió el dinero. El área contable actualiza el registro con la fecha y el número de la nota de crédito. Este es el estado final, ya no se puede modificar nada (sustento fecha y observación).
+•	ANULADA: Si cancelamos el proceso (solo se puede hacer desde TRAMITE).

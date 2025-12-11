@@ -1,36 +1,36 @@
 forward
-global type w_pr_rep_558_listado_rebaja_devolucion from w_windowbase
+global type w_pr_planilla_acumulado_new from w_windowbase
 end type
-type cb_consultar from u_cb within w_pr_rep_558_listado_rebaja_devolucion
+type cb_consultar from u_cb within w_pr_planilla_acumulado_new
 end type
-type pb_tproceso from u_pb within w_pr_rep_558_listado_rebaja_devolucion
+type pb_tproceso from u_pb within w_pr_planilla_acumulado_new
 end type
-type pb_concepto from u_pb within w_pr_rep_558_listado_rebaja_devolucion
+type pb_concepto from u_pb within w_pr_planilla_acumulado_new
 end type
-type pb_empleado from u_pb within w_pr_rep_558_listado_rebaja_devolucion
+type pb_empleado from u_pb within w_pr_planilla_acumulado_new
 end type
-type pb_ccosto from u_pb within w_pr_rep_558_listado_rebaja_devolucion
+type pb_ccosto from u_pb within w_pr_planilla_acumulado_new
 end type
-type uo_toolbar from uo_toolbar_reporte within w_pr_rep_558_listado_rebaja_devolucion
+type uo_toolbar from uo_toolbar_reporte within w_pr_planilla_acumulado_new
 end type
-type io_busqueda from uo_pr_busqueda within w_pr_rep_558_listado_rebaja_devolucion
+type io_busqueda from uo_pr_busqueda within w_pr_planilla_acumulado_new
 end type
-type pb_condiciones from u_pb within w_pr_rep_558_listado_rebaja_devolucion
+type pb_condiciones from u_pb within w_pr_planilla_acumulado_new
 end type
-type dw_1 from u_dw_multiple within w_pr_rep_558_listado_rebaja_devolucion
+type dw_1 from u_dw_multiple within w_pr_planilla_acumulado_new
 end type
-type mle_1 from multilineedit within w_pr_rep_558_listado_rebaja_devolucion
+type mle_1 from multilineedit within w_pr_planilla_acumulado_new
 end type
-type dw_position from datawindow within w_pr_rep_558_listado_rebaja_devolucion
+type dw_position from datawindow within w_pr_planilla_acumulado_new
 end type
 end forward
 
-global type w_pr_rep_558_listado_rebaja_devolucion from w_windowbase
+global type w_pr_planilla_acumulado_new from w_windowbase
 integer x = 0
 integer y = 232
 integer width = 3881
 integer height = 2280
-string title = "Listado de Rebajas y Devoluciones"
+string title = "Reporte de Acumulados"
 boolean controlmenu = true
 boolean minbox = true
 boolean maxbox = true
@@ -48,7 +48,7 @@ dw_1 dw_1
 mle_1 mle_1
 dw_position dw_position
 end type
-global w_pr_rep_558_listado_rebaja_devolucion w_pr_rep_558_listado_rebaja_devolucion
+global w_pr_planilla_acumulado_new w_pr_planilla_acumulado_new
 
 type variables
 datawindowchild dwc_tipoproceso
@@ -169,7 +169,7 @@ io_busqueda.uf_SetField_nombre ("nombrecompleto")
 ////////////////////////////////////////////////////////////////////////
 
 
-/*
+
 Open ( iw_report_properties, this )		
 
 
@@ -196,7 +196,7 @@ iw_report_properties.wf_RegisterGroupBand (4,10,68,68, "Arial", -7, TRUE, FALSE,
 
 iw_report_properties.wf_init ( this, dw_1)
 iw_report_properties.wf_ApplyGroup()
-*/
+
 dw_1.object.datawindow.print.preview=True
 end subroutine
 
@@ -210,7 +210,7 @@ Nro. RQ.			Fecha				Usuario				Descripción
 */
 long ll_empleado
 string ls_allEmpleado, ls_allTipoPlanilla, ls_tipoPlanilla, ls_allTipoProceso, ls_tipoProceso, ls_allConcepto, ls_concepto
-string ls_tipoAjuste, ls_anio, ls_allPeriodo, ls_pDesde, ls_pHasta, ls_conReintegro, ls_incluirExternos, ls_soloAfecto5ta
+string ls_tipoConcepto, ls_anio, ls_allPeriodo, ls_pDesde, ls_pHasta, ls_conReintegro, ls_incluirExternos, ls_soloAfecto5ta
 string ls_allCentroCosto, ls_centrocosto1, ls_centrocosto2, ls_selectcostcenter, ls_formato, ls_incluirsello
 
 dw_position.accepttext( )
@@ -223,19 +223,16 @@ ls_allTipoProceso		= f_nonulo_str(dw_position.GetItemstring( 1, "alltipoproceso"
 ls_tipoProceso			= f_nonulo_str(dw_position.GetItemstring( 1, "tipoproceso"))
 ls_allConcepto			= f_nonulo_str(dw_position.GetItemstring( 1, "allconcepto"))
 ls_concepto				= f_nonulo_str(dw_position.GetItemstring( 1, "concepto"))
-ls_tipoAjuste			= f_nonulo_str(dw_position.GetItemstring( 1, "tipoajuste"))
+ls_tipoConcepto		= f_nonulo_str(dw_position.GetItemstring( 1, "tipoconcepto"))
 ls_allPeriodo			= f_nonulo_str(dw_position.GetItemstring( 1, "allperiodo"))
 ls_pDesde				= LEFT(f_nonulo_str(dw_position.GetItemstring( 1, "periodo")),6)
 ls_pHasta				= LEFT(f_nonulo_str(dw_position.GetItemstring( 1, "periodo2")),6)
-
-/*
 ls_conReintegro		= f_nonulo_str(dw_position.GetItemstring( 1, "flagreintegro"))
 ls_incluirExternos	= f_nonulo_str(dw_position.GetItemstring( 1, "flagexternos"))
 ls_soloAfecto5ta		= f_nonulo_str(dw_position.GetItemstring( 1, "flagafectoirenta"))
 ls_allCentroCosto		= f_nonulo_str(dw_position.GetItemstring( 1, "allcentrocosto"))
 ls_formato				= f_nonulo_str(dw_position.GetItemstring( 1, "flagformato2"))
 ls_incluirsello			= f_nonulo_str(dw_position.GetItemstring( 1, "flagsello"))
-*/
 
 if ls_allEmpleado = "N" then 
 	if isnull(ll_empleado) then 
@@ -264,13 +261,15 @@ if ls_allConcepto = "N" and ls_concepto = "" then
 end if
 
 if ls_allConcepto = "N" then
-//	ls_tipoConcepto = "S"
-	//ls_soloAfecto5ta = "N"
+	ls_tipoConcepto = "S"
+	ls_soloAfecto5ta = "N"
 else
 	ls_concepto = ""
 end if
 
-
+if ls_tipoConcepto <> "IN" then
+	ls_soloAfecto5ta = "N"
+end if
 	
 
 if ls_allPeriodo = "N" then 
@@ -283,15 +282,42 @@ else
 	ls_anio = String(f_today(),"yyyy")
 end if
 
+if ls_allCentroCosto = "N" then
+	if f_nonulo_str(is_selectcostcenter) = "" then 
+		MessageBox("Validación","Debe de seleccionar uno o varios Centros de Costo.")
+		Return
+	else
+		ls_selectcostcenter = is_selectcostcenter
+		ls_selectcostcenter = mid(ls_selectcostcenter,6,len(ls_selectcostcenter) - 7)
+		if len(ls_selectcostcenter) > 9 then 
+			if len(ls_selectcostcenter) > 4000 then 
+				ls_centrocosto1 = mid(ls_selectcostcenter,1,4000)
+				ls_centrocosto2 = mid(ls_selectcostcenter,4001)
+			else
+				ls_centrocosto1 = ls_selectcostcenter
+				ls_centrocosto2 = ""
+			end if
+		else
+			ls_allCentroCosto = "S"
+			ls_centrocosto1 = ""
+			ls_centrocosto2 = ""
+		end if
+	end if
+end if	
+
+
+If ls_incluirsello = 'S' then
+	dw_1.Modify('p_sello.visible=true')
+	dw_1.Modify('p_sello.filename="'+wf_sql_ruta_sello()+'"')
+Else
+	dw_1.Modify('p_sello.visible=false')
+End If
 
 dw_1.SetRedraw(FALSE)
 
-/*
 dw_1.Retrieve(ll_empleado,ls_allTipoPlanilla,ls_tipoPlanilla,ls_allTipoProceso,is_selecttipoproceso,ls_allConcepto,&
-				  ls_concepto,ls_tipoAjuste,ls_anio,ls_allPeriodo,ls_pDesde,ls_pHasta,ls_conReintegro,ls_incluirExternos,&
+				  ls_concepto,ls_tipoConcepto,ls_anio,ls_allPeriodo,ls_pDesde,ls_pHasta,ls_conReintegro,ls_incluirExternos,&
 				  ls_soloAfecto5ta,ls_allCentroCosto,ls_centrocosto1,ls_centrocosto2,ls_formato)
-				  
-				  */
 dw_1.sort()
 dw_1.groupcalc()
 dw_1.SetRedraw(TRUE)
@@ -433,7 +459,17 @@ CHOOSE CASE eventname
 	CASE 'cb_consultar_clicked'
 		wf_prepare_sql()	
 
+/* AGREGAR TRAMA ---DESPUES DE CARGAR EL DW->*/
+string ls_dateTimeString, ls_selloAgua
 
+ls_dateTimeString = String(f_today(),"dd/mm/yyyy hh:mm")
+ls_selloAgua = str_global.gv_userid + " - " + ls_dateTimeString
+
+f_agregar_tramado_dw(dw_1,ls_selloAgua,'P')
+/*<-------------*/		
+
+//		Open ( iw_report_properties, this )
+//		iw_report_properties.cb_aceptar.triggerevent( Clicked!)
 		
 	Case "pb_condiciones_clicked"
 		if not isvalid (iw_report_properties) then
@@ -570,7 +606,7 @@ END CHOOSE
 
 end event
 
-on w_pr_rep_558_listado_rebaja_devolucion.create
+on w_pr_planilla_acumulado_new.create
 int iCurrent
 call super::create
 this.cb_consultar=create cb_consultar
@@ -598,7 +634,7 @@ this.Control[iCurrent+10]=this.mle_1
 this.Control[iCurrent+11]=this.dw_position
 end on
 
-on w_pr_rep_558_listado_rebaja_devolucion.destroy
+on w_pr_planilla_acumulado_new.destroy
 call super::destroy
 destroy(this.cb_consultar)
 destroy(this.pb_tproceso)
@@ -613,7 +649,7 @@ destroy(this.mle_1)
 destroy(this.dw_position)
 end on
 
-type cb_consultar from u_cb within w_pr_rep_558_listado_rebaja_devolucion
+type cb_consultar from u_cb within w_pr_planilla_acumulado_new
 integer x = 3397
 integer y = 336
 integer width = 370
@@ -624,7 +660,7 @@ string facename = "Arial"
 string text = "Consultar"
 end type
 
-type pb_tproceso from u_pb within w_pr_rep_558_listado_rebaja_devolucion
+type pb_tproceso from u_pb within w_pr_planilla_acumulado_new
 integer x = 1179
 integer y = 356
 integer width = 91
@@ -637,7 +673,7 @@ string disabledname = ".\imagenes\Buscar_disabled.png"
 string powertiptext = "Seleccionar Tipos de Proceso"
 end type
 
-type pb_concepto from u_pb within w_pr_rep_558_listado_rebaja_devolucion
+type pb_concepto from u_pb within w_pr_planilla_acumulado_new
 integer x = 2583
 integer y = 356
 integer width = 91
@@ -650,7 +686,7 @@ string disabledname = ".\imagenes\Buscar_disabled.png"
 string powertiptext = "Seleccionar un concepto"
 end type
 
-type pb_empleado from u_pb within w_pr_rep_558_listado_rebaja_devolucion
+type pb_empleado from u_pb within w_pr_planilla_acumulado_new
 integer x = 2583
 integer y = 276
 integer width = 91
@@ -663,7 +699,7 @@ string disabledname = ".\imagenes\Buscar_disabled.png"
 string powertiptext = "Seleccionar un Empleado"
 end type
 
-type pb_ccosto from u_pb within w_pr_rep_558_listado_rebaja_devolucion
+type pb_ccosto from u_pb within w_pr_planilla_acumulado_new
 integer x = 2583
 integer y = 196
 integer width = 91
@@ -676,9 +712,9 @@ string disabledname = ".\imagenes\Buscar_disabled.png"
 string powertiptext = "Seleccionar Centros de Costo"
 end type
 
-type uo_toolbar from uo_toolbar_reporte within w_pr_rep_558_listado_rebaja_devolucion
+type uo_toolbar from uo_toolbar_reporte within w_pr_planilla_acumulado_new
 integer x = 18
-integer y = 16
+integer y = 20
 integer width = 3799
 integer taborder = 50
 boolean border = false
@@ -688,9 +724,8 @@ on uo_toolbar.destroy
 call uo_toolbar_reporte::destroy
 end on
 
-type io_busqueda from uo_pr_busqueda within w_pr_rep_558_listado_rebaja_devolucion
+type io_busqueda from uo_pr_busqueda within w_pr_planilla_acumulado_new
 event destroy ( )
-boolean visible = false
 integer x = 23
 integer y = 548
 integer width = 1728
@@ -703,7 +738,7 @@ on io_busqueda.destroy
 call uo_pr_busqueda::destroy
 end on
 
-type pb_condiciones from u_pb within w_pr_rep_558_listado_rebaja_devolucion
+type pb_condiciones from u_pb within w_pr_planilla_acumulado_new
 integer x = 3662
 integer y = 176
 integer width = 137
@@ -714,13 +749,13 @@ boolean originalsize = true
 string picturename = "pr_prop.bmp"
 end type
 
-type dw_1 from u_dw_multiple within w_pr_rep_558_listado_rebaja_devolucion
+type dw_1 from u_dw_multiple within w_pr_planilla_acumulado_new
 integer x = 18
-integer y = 556
+integer y = 644
 integer width = 3794
-integer height = 1580
+integer height = 1492
 integer taborder = 110
-string dataobject = "dw_pr_rep_558_listado_rebaja_devolucion"
+string dataobject = "dw_pr_planilla_acumulada_new"
 boolean hscrollbar = true
 boolean vscrollbar = true
 boolean livescroll = true
@@ -730,7 +765,7 @@ end type
 event clicked;call super::clicked;Post f_ordenar_datawindow (this, dwo)
 end event
 
-type mle_1 from multilineedit within w_pr_rep_558_listado_rebaja_devolucion
+type mle_1 from multilineedit within w_pr_planilla_acumulado_new
 boolean visible = false
 integer x = 2875
 integer y = 24
@@ -750,14 +785,14 @@ boolean vscrollbar = true
 borderstyle borderstyle = stylelowered!
 end type
 
-type dw_position from datawindow within w_pr_rep_558_listado_rebaja_devolucion
-integer x = 23
+type dw_position from datawindow within w_pr_planilla_acumulado_new
+integer x = 18
 integer y = 152
 integer width = 3799
 integer height = 388
 integer taborder = 20
 string title = "none"
-string dataobject = "dw_pr_listado_rebaja_devolucion_position"
+string dataobject = "dw_pr_planilla_acumulado_position"
 boolean livescroll = true
 borderstyle borderstyle = styleraised!
 end type
@@ -784,7 +819,7 @@ Choose Case dwo.name
 				post wf_filtrar_tipoproceso()
 			end if
 		end if
-	/*	
+		
 	Case "allcentrocosto"
 		if data = "S" then
 			SetItem (1, "CentroCosto", str_global.gv_null_string)
@@ -795,7 +830,7 @@ Choose Case dwo.name
 			pb_ccosto.enabled = True
 			pb_ccosto.event clicked( )
 		end if	
-		*/
+		
 	Case "allempleado"
 		if data = "S" then
 			SetItem (1, "Empleado", ll_null)
@@ -868,7 +903,6 @@ Choose Case dwo.name
 		for i = 5 to 17
 			dw_1.Modify ( "compute_"+string(i)+".Font.Weight = " + ls_fuenteNegrita )		
 		next
-		/*
 	Case "flagsello"
 		if data = "S" then
 			dw_1.Modify('p_sello.visible=true')
@@ -877,7 +911,6 @@ Choose Case dwo.name
 		else
 			dw_1.Modify('p_sello.visible=false')
 		end if
-		*/
 End Choose
 end event
 
