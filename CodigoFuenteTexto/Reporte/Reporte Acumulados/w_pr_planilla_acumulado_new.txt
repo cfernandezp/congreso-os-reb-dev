@@ -1,0 +1,916 @@
+forward
+global type w_pr_planilla_acumulado_new from w_windowbase
+end type
+type cb_consultar from u_cb within w_pr_planilla_acumulado_new
+end type
+type pb_tproceso from u_pb within w_pr_planilla_acumulado_new
+end type
+type pb_concepto from u_pb within w_pr_planilla_acumulado_new
+end type
+type pb_empleado from u_pb within w_pr_planilla_acumulado_new
+end type
+type pb_ccosto from u_pb within w_pr_planilla_acumulado_new
+end type
+type uo_toolbar from uo_toolbar_reporte within w_pr_planilla_acumulado_new
+end type
+type io_busqueda from uo_pr_busqueda within w_pr_planilla_acumulado_new
+end type
+type pb_condiciones from u_pb within w_pr_planilla_acumulado_new
+end type
+type dw_1 from u_dw_multiple within w_pr_planilla_acumulado_new
+end type
+type mle_1 from multilineedit within w_pr_planilla_acumulado_new
+end type
+type dw_position from datawindow within w_pr_planilla_acumulado_new
+end type
+end forward
+
+global type w_pr_planilla_acumulado_new from w_windowbase
+integer x = 0
+integer y = 232
+integer width = 3881
+integer height = 2280
+string title = "Reporte de Acumulados"
+boolean controlmenu = true
+boolean minbox = true
+boolean maxbox = true
+boolean resizable = true
+windowtype windowtype = child!
+cb_consultar cb_consultar
+pb_tproceso pb_tproceso
+pb_concepto pb_concepto
+pb_empleado pb_empleado
+pb_ccosto pb_ccosto
+uo_toolbar uo_toolbar
+io_busqueda io_busqueda
+pb_condiciones pb_condiciones
+dw_1 dw_1
+mle_1 mle_1
+dw_position dw_position
+end type
+global w_pr_planilla_acumulado_new w_pr_planilla_acumulado_new
+
+type variables
+datawindowchild dwc_tipoproceso
+
+String /*iv_sql_original, is_selectempleado, */is_selectcostcenter, is_selecttipoproceso
+//String is_TipoProceso
+
+
+//sentencia sql original:
+string iv_sql, iv_string_null
+string iv$_clase_pago // Sueldo, Jornal
+string iv$_year, iv$_month, iv$_week
+
+string iv$_desde, iv$_hasta
+string iv$_desdepar, iv$_hastapar
+long iv%_desde_empleado, iv%_hasta_empleado
+long iv%_desde_fila, iv%_hasta_fila
+
+long iv%_fila
+
+// Orden Impresion
+string iv$_orden = 'E'
+
+transaction SQLCA2
+
+w_report_properties_new  iw_report_properties
+
+long iv%_filas
+
+boolean ib_posisionsello
+end variables
+
+forward prototypes
+public subroutine wf_iniciar ()
+public subroutine wf_prepare_sql ()
+public subroutine wf_ancestor_menu ()
+public function boolean wf_validar_todos (boolean par_validar_desdehasta)
+public subroutine wf_print ()
+public subroutine wf_filtrar_tipoproceso ()
+public function string wf_sql_ruta_sello ()
+public subroutine wf_posicionsello ()
+end prototypes
+
+public subroutine wf_iniciar ();/*----*/
+//dw_2.SetTransObject(SQLCA)
+//dw_2.InsertRow(0)
+
+dw_1.SetTransObject(SQLCA)
+//f_pr_cambio_dropdown_cc (dw_1, "centrocosto_descripcion")
+//f_pr_cambio_dropdown_cc (dw_1, "centrocosto_descripcion_f")
+/*----*/
+X = 0
+Y = 0
+
+/**/
+string 	ls_tipoplanilla
+datetime ldt_today
+datawindowchild dwc_tipoplanilla
+
+ldt_today = f_today()
+
+dw_position.settransobject(sqlca)
+
+ls_tipoplanilla = uo_seguridad.uf_PrepararTipoPlanilla (dw_position, "TipoPlanilla")
+
+dw_position.insertrow(0)
+
+uo_seguridad.uf_DefaultTipoPlanilla (dw_position, "TipoPlanilla")
+
+dw_position.getchild('tipoplanilla', dwc_tipoplanilla)
+
+if dwc_tipoplanilla.RowCount() = 0 then
+	dwc_tipoplanilla.InsertRow(0)
+end if
+
+if not isnull(str_payroll.gv_defa_tipoplanilla) and len(str_payroll.gv_defa_tipoplanilla) > 0 then
+	dw_position.SetItem( 1, "TipoPlanilla" , str_payroll.gv_defa_tipoplanilla)	
+else
+	dw_position.SetItem( 1, "AllTipoPlanilla" , 'S')	
+end if
+
+dw_position.SetItem( 1, "Periodo" , LEFT(str_payroll.gv_periodo,4)+"0101" )	
+dw_position.SetItem( 1, "Periodo2" , str_payroll.gv_periodo )	
+
+dw_position.Modify("tipoproceso.protect=1")
+dw_position.Modify("tipoproceso.dddw.useasborder=no")
+dw_position.GetChild("TipoProceso", dwc_tipoproceso)
+dwc_tipoproceso.SetTransObject(SQLCA)
+dwc_tipoproceso.Retrieve()
+dwc_tipoproceso.SetFilter("")
+dwc_tipoproceso.Filter()
+
+//post wf_filtrar_tipoproceso()
+
+uo_toolbar.uf_config(This)
+uo_toolbar.uf_setdw(dw_1)
+
+
+/**/
+
+
+iv_sql = dw_1. describe('datawindow.table.select')
+long w%_pos
+w%_pos = Pos (iv_sql, "GROUP BY")
+
+iv_sql = Left (iv_sql,w%_pos - 1)
+
+	
+// Objeto Busqueda
+
+io_busqueda.uf_Init (dw_1, TRUE)
+io_busqueda.iv%_ordenar = false
+io_busqueda.uf_SetField_codigo ("personaactual")
+io_busqueda.uf_SetField_nombre ("nombrecompleto")
+
+////////////////////////////////////////////////////////////////////////
+// Se setean los valores para el ordenamiento de la lista
+////////////////////////////////////////////////////////////////////////
+
+
+
+Open ( iw_report_properties, this )		
+
+
+iw_report_properties.wf_RegisterGroupExpression ("ccompaniasocio" ,"Compañía" )
+iw_report_properties.wf_RegisterGroupExpression ("tipoplanilla" ,"Tipo de Planilla" )
+iw_report_properties.wf_RegisterGroupExpression ("left (periodo,4)" ,"Periodo" )
+iw_report_properties.wf_RegisterGroupExpression ("nombrecompleto" ,"Trabajador" )
+//iw_report_properties.wf_RegisterGroupExpression ("concepto" ,"Concepto" )
+
+iw_report_properties.wf_RegisterSortExpression ("periodo", "Periodo")
+iw_report_properties.wf_RegisterSortExpression ("personaactual", "Código del Empleado")			
+iw_report_properties.wf_RegisterSortExpression ("nombrecompleto", "Nombre del Empleado")						
+
+
+iw_report_properties.wf_RegisterDatawindow (dw_1)
+
+
+iw_report_properties.wf_RegisterGroupBand (1,10,68,68, "Arial", -7, TRUE, TRUE, RGB (0,0,0))
+iw_report_properties.wf_RegisterGroupBand (2,10,68,68, "Arial", -7, TRUE, TRUE, RGB (0,0,0))
+iw_report_properties.wf_RegisterGroupBand (3,10,68,68, "Arial", -7, TRUE, TRUE, RGB (0,0,0))
+iw_report_properties.wf_RegisterGroupBand (4,10,68,68, "Arial", -7, TRUE, FALSE, RGB (0,0,0))
+//iw_report_properties.wf_RegisterGroupBand (5,10,68,68, "Arial", -7, FALSE, FALSE, RGB (0,0,0))
+
+
+iw_report_properties.wf_init ( this, dw_1)
+iw_report_properties.wf_ApplyGroup()
+
+dw_1.object.datawindow.print.preview=True
+end subroutine
+
+public subroutine wf_prepare_sql ();/*
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Modificaciones
+Nro. RQ.			Fecha				Usuario				Descripción
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+*/
+long ll_empleado
+string ls_allEmpleado, ls_allTipoPlanilla, ls_tipoPlanilla, ls_allTipoProceso, ls_tipoProceso, ls_allConcepto, ls_concepto
+string ls_tipoConcepto, ls_anio, ls_allPeriodo, ls_pDesde, ls_pHasta, ls_conReintegro, ls_incluirExternos, ls_soloAfecto5ta
+string ls_allCentroCosto, ls_centrocosto1, ls_centrocosto2, ls_selectcostcenter, ls_formato, ls_incluirsello
+
+dw_position.accepttext( )
+
+ls_allEmpleado			= f_nonulo_str(dw_position.GetItemstring( 1, "allempleado"))
+ll_empleado				= dw_position.GetItemnumber( 1, "empleado")
+ls_allTipoPlanilla	= f_nonulo_str(dw_position.GetItemstring( 1, "alltipoplanilla"))
+ls_tipoPlanilla		= f_nonulo_str(dw_position.GetItemstring( 1, "tipoplanilla"))
+ls_allTipoProceso		= f_nonulo_str(dw_position.GetItemstring( 1, "alltipoproceso"))
+ls_tipoProceso			= f_nonulo_str(dw_position.GetItemstring( 1, "tipoproceso"))
+ls_allConcepto			= f_nonulo_str(dw_position.GetItemstring( 1, "allconcepto"))
+ls_concepto				= f_nonulo_str(dw_position.GetItemstring( 1, "concepto"))
+ls_tipoConcepto		= f_nonulo_str(dw_position.GetItemstring( 1, "tipoconcepto"))
+ls_allPeriodo			= f_nonulo_str(dw_position.GetItemstring( 1, "allperiodo"))
+ls_pDesde				= LEFT(f_nonulo_str(dw_position.GetItemstring( 1, "periodo")),6)
+ls_pHasta				= LEFT(f_nonulo_str(dw_position.GetItemstring( 1, "periodo2")),6)
+ls_conReintegro		= f_nonulo_str(dw_position.GetItemstring( 1, "flagreintegro"))
+ls_incluirExternos	= f_nonulo_str(dw_position.GetItemstring( 1, "flagexternos"))
+ls_soloAfecto5ta		= f_nonulo_str(dw_position.GetItemstring( 1, "flagafectoirenta"))
+ls_allCentroCosto		= f_nonulo_str(dw_position.GetItemstring( 1, "allcentrocosto"))
+ls_formato				= f_nonulo_str(dw_position.GetItemstring( 1, "flagformato2"))
+ls_incluirsello			= f_nonulo_str(dw_position.GetItemstring( 1, "flagsello"))
+
+if ls_allEmpleado = "N" then 
+	if isnull(ll_empleado) then 
+		MessageBox("Validación","Debe de seleccionar un Empleado.")
+		Return
+	end if
+else
+	ll_empleado = 0
+end if
+
+if ls_allTipoPlanilla = "N" and ls_tipoPlanilla = "" then
+	MessageBox("Validación","Debe de seleccionar un Tipo de Planilla.")
+	Return
+end if
+
+if ls_allTipoProceso = "N" then 
+	if is_selecttipoproceso = "" then 
+		MessageBox("Validación","Debe de seleccionar uno o varios Tipos de Proceso.")
+		Return
+	end if
+end if
+
+if ls_allConcepto = "N" and ls_concepto = "" then
+	MessageBox("Validación","Debe de seleccionar un Concepto.")
+	Return
+end if
+
+if ls_allConcepto = "N" then
+	ls_tipoConcepto = "S"
+	ls_soloAfecto5ta = "N"
+else
+	ls_concepto = ""
+end if
+
+if ls_tipoConcepto <> "IN" then
+	ls_soloAfecto5ta = "N"
+end if
+	
+
+if ls_allPeriodo = "N" then 
+	if ls_pHasta < ls_pDesde then 
+		MessageBox("Validación","El periodo final debe ser mayor o igual al periodo de inicio.")
+		Return
+	end if
+	ls_anio = left(ls_pHasta,4)
+else
+	ls_anio = String(f_today(),"yyyy")
+end if
+
+if ls_allCentroCosto = "N" then
+	if f_nonulo_str(is_selectcostcenter) = "" then 
+		MessageBox("Validación","Debe de seleccionar uno o varios Centros de Costo.")
+		Return
+	else
+		ls_selectcostcenter = is_selectcostcenter
+		ls_selectcostcenter = mid(ls_selectcostcenter,6,len(ls_selectcostcenter) - 7)
+		if len(ls_selectcostcenter) > 9 then 
+			if len(ls_selectcostcenter) > 4000 then 
+				ls_centrocosto1 = mid(ls_selectcostcenter,1,4000)
+				ls_centrocosto2 = mid(ls_selectcostcenter,4001)
+			else
+				ls_centrocosto1 = ls_selectcostcenter
+				ls_centrocosto2 = ""
+			end if
+		else
+			ls_allCentroCosto = "S"
+			ls_centrocosto1 = ""
+			ls_centrocosto2 = ""
+		end if
+	end if
+end if	
+
+
+If ls_incluirsello = 'S' then
+	dw_1.Modify('p_sello.visible=true')
+	dw_1.Modify('p_sello.filename="'+wf_sql_ruta_sello()+'"')
+Else
+	dw_1.Modify('p_sello.visible=false')
+End If
+
+dw_1.SetRedraw(FALSE)
+
+dw_1.Retrieve(ll_empleado,ls_allTipoPlanilla,ls_tipoPlanilla,ls_allTipoProceso,is_selecttipoproceso,ls_allConcepto,&
+				  ls_concepto,ls_tipoConcepto,ls_anio,ls_allPeriodo,ls_pDesde,ls_pHasta,ls_conReintegro,ls_incluirExternos,&
+				  ls_soloAfecto5ta,ls_allCentroCosto,ls_centrocosto1,ls_centrocosto2,ls_formato)
+dw_1.sort()
+dw_1.groupcalc()
+dw_1.SetRedraw(TRUE)
+
+
+end subroutine
+
+public subroutine wf_ancestor_menu ();
+end subroutine
+
+public function boolean wf_validar_todos (boolean par_validar_desdehasta);//int lv_fila
+//string lv_cadena
+//	if uo_filtro1.dw_filtro.AcceptText() <> 1 then
+//		return FALSE
+//	end if
+//
+//	// ... falta validar el periodo --- formato del dato
+//	str_pass. s[1] = uo_filtro1.uf_Get_Periodo()
+//	if isnull(str_pass. s[1] ) then
+//		messagebox( 'Aviso', 'Ingrese el periodo')
+//		return FALSE
+//	end if
+//
+//	str_pass. s[2] = uo_filtro1.dw_filtro. getitemstring( 1, 'tipoplanilla')
+//	if isnull( str_pass. s[2] ) then
+//		messagebox( 'Aviso', 'Ingrese el tipo de planilla')
+//		return FALSE
+//	end if
+//
+//	str_pass. s[3] = uo_filtro1.dw_filtro. getitemstring( 1, 'compania')
+//	if isnull( str_pass. s[3] ) then
+//		messagebox( 'Aviso', 'Ingrese la compañía')
+//		return FALSE
+//	end if
+//	
+//	str_pass. s[4] = uo_filtro1.dw_filtro. getitemstring( 1, 'tipoproceso')
+//	if isnull( str_pass. s[4] ) then
+//		messagebox( 'Aviso', 'Ingrese el tipoproceso')
+//		return FALSE
+//	end if
+//	
+//	if par_validar_desdehasta = TRUE then
+//		str_pass. d[1] = iv%_desde_empleado
+//		str_pass. s[11] = iv$_desdepar
+//		if str_pass. d[1] = 0 then
+//			messagebox( 'Aviso', ' Seleccione el inicio de impresión (DESDE) ')
+//			return FALSE
+//		end if
+//	
+//		str_pass. d[2] = iv%_hasta_empleado
+//		str_pass. s[12] = iv$_hastapar
+//		if str_pass. d[2] = 0 then
+//			messagebox( 'Aviso', ' Seleccione el fin de impresión (HASTA) ')
+//			return FALSE
+//		end if
+//	
+//
+//		if MessageBox ( "Planillas", "Se imprimira desde el trabajador " + string ( iv%_desde_empleado) + " hasta el trabajador " + string ( iv%_hasta_empleado ) + "  ( " + string ( iv%_hasta_fila - iv%_desde_fila + 1 ) + " trabajadores ).  Desea continuar ? ", Question!, YesNo!) = 1 then
+//			Return TRUE
+//		else
+//		end if
+//	else
+//		str_pass.d[1] = 0
+//		str_pass.d[2] = 0
+//		Return TRUE
+//	end if
+//	
+Return TRUE
+
+end function
+
+public subroutine wf_print ();dw_1.print()
+end subroutine
+
+public subroutine wf_filtrar_tipoproceso ();dw_position.accepttext( )
+if f_nonulo_str(dw_position.getitemstring( 1, "Tipoplanilla")) <> "" and f_nonulo_str(dw_position.getitemstring( 1, "periodo")) <> "" then
+	dwc_tipoproceso.SetFilter("TipoPlanilla  = '" + dw_position.getitemstring( 1, "Tipoplanilla") + "'  AND Periodo = '" + dw_position.getitemstring( 1, "periodo") + "'")
+	dwc_tipoproceso.Filter()
+else
+	dwc_tipoproceso.SetFilter("")
+	dwc_tipoproceso.Filter()
+end if
+
+if dwc_tipoproceso.RowCount() > 0 then
+	if dw_position.getitemstring( 1, "allTipoProceso") = "N" then
+		if dwc_tipoproceso.Find ("TipoProceso = '" + str_payroll.gv_defa_tipoproceso + "'", 1, dwc_tipoproceso.RowCount()) > 0 then
+			dw_position.SetItem (1, "TipoProceso", str_payroll.gv_defa_tipoproceso  )
+		else
+			dw_position.SetItem (1, "TipoProceso", dwc_tipoproceso.GetItemString ( 1, "TipoProceso" ) )
+		end if
+		is_selecttipoproceso = "in ('" + dw_position.getitemstring( 1, "TipoProceso") + "') "
+	end if
+else
+	dw_position.SetItem (1, "TipoProceso", str_global.gv_null_string)
+	is_selecttipoproceso = ""
+end if
+end subroutine
+
+public function string wf_sql_ruta_sello ();String ls_nameimage,ls_ruta
+
+ls_ruta=f_sql_read_parametrosmast_$_explicacion("PR", "999999", "RUTASELLO")
+
+SELECT top 1 PR_SellosBoleta.Archivo  into :ls_nameimage
+	FROM PR_SellosBoleta
+	where Cargo='JR'and PeriodoFin is null
+	order by PeriodoIni desc
+	using sqlca;
+	 
+return ls_ruta + ls_nameimage
+end function
+
+public subroutine wf_posicionsello ();
+If not ib_posisionsello Then
+	//dw_1.Modify('p_sello.x=4400')
+	//dw_1.Modify('p_sello.y=2630')
+	dw_1.Modify('p_sello.x=3767')
+	dw_1.Modify('p_sello.y=48')
+
+
+End If
+
+
+ib_posisionsello=true
+end subroutine
+
+event objectstartevent;call super::objectstartevent;long ll_pos
+str_pass str_parametro
+
+CHOOSE CASE eventname
+
+	CASE 'opened'
+		wf_iniciar()
+		
+		io_resize.uf_Register (uo_toolbar, 5)	
+		io_resize.uf_Register (dw_position, 5)			
+		io_resize.uf_Register (dw_1, 7)	
+		io_resize.uf_Register (pb_condiciones, 1)
+		
+	CASE 'cb_consultar_clicked'
+		wf_prepare_sql()	
+
+/* AGREGAR TRAMA ---DESPUES DE CARGAR EL DW->*/
+string ls_dateTimeString, ls_selloAgua
+
+ls_dateTimeString = String(f_today(),"dd/mm/yyyy hh:mm")
+ls_selloAgua = str_global.gv_userid + " - " + ls_dateTimeString
+
+f_agregar_tramado_dw(dw_1,ls_selloAgua,'P')
+/*<-------------*/		
+
+//		Open ( iw_report_properties, this )
+//		iw_report_properties.cb_aceptar.triggerevent( Clicked!)
+		
+	Case "pb_condiciones_clicked"
+		if not isvalid (iw_report_properties) then
+			Open ( iw_report_properties, this )
+		else			
+			iw_report_properties.Visible = TRUE
+		end if
+	
+	
+	CASE "cb_empleado_clicked","pb_empleado_clicked"
+		str_pass str_parm
+
+		str_parm.po[1] = this
+		str_parm.s[1] = 'E'
+		
+		if IsValid(w_ma_persona_select) then Close(w_ma_persona_select)
+//		if not isvalid(w_ma_persona_select) then
+			openwithparm(w_ma_persona_select, str_parm)
+//		else
+//			w_ma_persona_select.show()
+//		end if
+		
+	CASE "persona_selected"
+		dw_position.setitem(1,"empleado",str_global.gv_number_selected )
+		if IsValid(w_ma_persona_select) then Close(w_ma_persona_select)
+//		dw_2.setitem(1,"idempleado",string(long(str_global.gv_number_selected)) )			
+//		dw_2.setitem(1,"empleado",str_global.gv_number_selected )
+//		dw_2.modify("st_nombrecompleto.text = '" + str_global.gv_value_selected + "'")
+//		if isvalid(w_ma_persona_select) then 
+//			w_ma_persona_select.hide()
+//		end if
+	
+	CASE "pb_ccosto_clicked"
+		open(w_as_costcenter_padre_select)
+
+		is_selectcostcenter = message.stringparm
+		is_selectcostcenter = f_nonulo_str(is_selectcostcenter)
+				
+		if is_selectcostcenter <> '' then
+			ll_pos = POS(is_selectcostcenter,',')
+			if ll_pos = 0 then
+				dw_position.object.centrocosto[1] = mid(is_selectcostcenter,6,len(is_selectcostcenter) - 7)
+				dw_position.object.centrocosto.visible = true
+				dw_position.object.t_seleccionados.visible = false
+			else
+				dw_position.object.centrocosto.visible = false
+				dw_position.object.t_seleccionados.visible = true
+			end if		
+		else
+			dw_position.object.centrocosto[1] = str_global.gv_null_string
+			dw_position.object.centrocosto.visible = true
+			dw_position.object.t_seleccionados.visible = false
+		end if	
+	
+	CASE "pb_tproceso_clicked"
+
+		str_parametro.s[1] = ""
+		str_parametro.s[2] = "Seleccione los Tipos de Proceso."
+		str_global.gv_value_selected = ""
+		str_global.gv_number_selected = 0
+		OpenWithParm (w_ma_pr_tipoproceso_select_mult, str_parametro)
+			
+			if str_global.gv_number_selected = 1 then  // Si se ACEPTO
+				if str_global.gv_value_selected = "T" then 
+					is_selecttipoproceso = ""
+					dw_position.SetItem (1, "alltipoproceso", "S")
+					dw_position.SetItem (1, "tipoproceso", str_global.gv_null_string)
+					dw_position.object.t_seleccionadostproceso.visible = false
+				else
+					is_selecttipoproceso =  str_global.gv_value_selected
+					if len(is_selecttipoproceso) = 3 then
+						dw_position.SetItem (1, "tipoproceso", is_selecttipoproceso)
+						dw_position.object.t_seleccionadostproceso.visible = false
+					else
+						dw_position.object.t_seleccionadostproceso.visible = true
+					end if
+					is_selecttipoproceso =  f_replace(is_selecttipoproceso,"-","','")
+				end if
+			else
+				is_selecttipoproceso = ""
+				dw_position.SetItem (1, "tipoproceso", str_global.gv_null_string)
+				dw_position.object.t_seleccionadostproceso.visible = False
+			end if
+			
+	CASE "pb_concepto_clicked"
+	
+	if isvalid(w_pr_concepto_popup) then Close(w_pr_concepto_popup)
+	str_parametro.po[1] = this
+	OpenWithParm (w_pr_concepto_popup, str_parametro )
+	
+	w_pr_concepto_popup.wf_filtrarcc(False)
+	w_pr_concepto_popup.wf_PermitirCreacionSecuencia (False)
+	
+	CASE "ue_concepto_selected"
+		dw_position.SetItem (1, "concepto", str_global.gv_value_selected)
+		if isvalid(w_pr_concepto_popup) then Close(w_pr_concepto_popup)
+	
+//	CASE "cb_export_clicked"
+//			// Exporta a excel con formato
+//		integer li_ret
+//		String ls_named,ls_txtname 
+//		String w_destino
+//		String ls_defext = "xls" 
+//		String ls_filtro = "Archivo de Excel(*.xls),*.xls" 
+//		n_dwr_service_parm lnvo_parm
+//		lnvo_parm = create n_dwr_service_parm
+//		lnvo_parm.is_sheet_name= "Reporte"
+//		lnvo_parm.ib_group_header = TRUE
+//		lnvo_parm.ib_group_trailer = TRUE
+//		
+//		GraphicObject w_control
+//		Datawindow w_dw
+//		w_control = GetFocus( ) 
+//
+//		GetFileSaveName("Guardar Archivo",/*ls_txtname*/w_destino,ls_named,ls_defext,ls_filtro) 
+//		//w_destino = "c:\libro1.xls"
+//		
+//		//Nombre del archivo		 
+//		li_ret = uf_save_dw_as_excel_parm(dw_1, w_destino, lnvo_parm)
+//		
+//		if li_ret = 1 then
+//			Messagebox("Aviso","Archivo guardado en " + w_destino) // success
+//		else
+//			Messagebox("Aviso","Error al generar el archivo")//fail
+//		end if
+
+	
+	CASE "closed"
+		if isvalid(w_ma_persona_select) then 
+			close(w_ma_persona_select )
+		end if	
+		
+END CHOOSE
+
+end event
+
+on w_pr_planilla_acumulado_new.create
+int iCurrent
+call super::create
+this.cb_consultar=create cb_consultar
+this.pb_tproceso=create pb_tproceso
+this.pb_concepto=create pb_concepto
+this.pb_empleado=create pb_empleado
+this.pb_ccosto=create pb_ccosto
+this.uo_toolbar=create uo_toolbar
+this.io_busqueda=create io_busqueda
+this.pb_condiciones=create pb_condiciones
+this.dw_1=create dw_1
+this.mle_1=create mle_1
+this.dw_position=create dw_position
+iCurrent=UpperBound(this.Control)
+this.Control[iCurrent+1]=this.cb_consultar
+this.Control[iCurrent+2]=this.pb_tproceso
+this.Control[iCurrent+3]=this.pb_concepto
+this.Control[iCurrent+4]=this.pb_empleado
+this.Control[iCurrent+5]=this.pb_ccosto
+this.Control[iCurrent+6]=this.uo_toolbar
+this.Control[iCurrent+7]=this.io_busqueda
+this.Control[iCurrent+8]=this.pb_condiciones
+this.Control[iCurrent+9]=this.dw_1
+this.Control[iCurrent+10]=this.mle_1
+this.Control[iCurrent+11]=this.dw_position
+end on
+
+on w_pr_planilla_acumulado_new.destroy
+call super::destroy
+destroy(this.cb_consultar)
+destroy(this.pb_tproceso)
+destroy(this.pb_concepto)
+destroy(this.pb_empleado)
+destroy(this.pb_ccosto)
+destroy(this.uo_toolbar)
+destroy(this.io_busqueda)
+destroy(this.pb_condiciones)
+destroy(this.dw_1)
+destroy(this.mle_1)
+destroy(this.dw_position)
+end on
+
+type cb_consultar from u_cb within w_pr_planilla_acumulado_new
+integer x = 3397
+integer y = 336
+integer width = 370
+integer height = 92
+integer taborder = 60
+integer weight = 400
+string facename = "Arial"
+string text = "Consultar"
+end type
+
+type pb_tproceso from u_pb within w_pr_planilla_acumulado_new
+integer x = 1179
+integer y = 356
+integer width = 91
+integer height = 72
+integer taborder = 50
+boolean enabled = false
+string text = ""
+string picturename = ".\imagenes\Buscar.png"
+string disabledname = ".\imagenes\Buscar_disabled.png"
+string powertiptext = "Seleccionar Tipos de Proceso"
+end type
+
+type pb_concepto from u_pb within w_pr_planilla_acumulado_new
+integer x = 2583
+integer y = 356
+integer width = 91
+integer height = 72
+integer taborder = 40
+boolean enabled = false
+string text = ""
+string picturename = ".\imagenes\Buscar.png"
+string disabledname = ".\imagenes\Buscar_disabled.png"
+string powertiptext = "Seleccionar un concepto"
+end type
+
+type pb_empleado from u_pb within w_pr_planilla_acumulado_new
+integer x = 2583
+integer y = 276
+integer width = 91
+integer height = 72
+integer taborder = 40
+boolean enabled = false
+string text = ""
+string picturename = ".\imagenes\Buscar.png"
+string disabledname = ".\imagenes\Buscar_disabled.png"
+string powertiptext = "Seleccionar un Empleado"
+end type
+
+type pb_ccosto from u_pb within w_pr_planilla_acumulado_new
+integer x = 2583
+integer y = 196
+integer width = 91
+integer height = 72
+integer taborder = 30
+boolean enabled = false
+string text = ""
+string picturename = ".\imagenes\Buscar.png"
+string disabledname = ".\imagenes\Buscar_disabled.png"
+string powertiptext = "Seleccionar Centros de Costo"
+end type
+
+type uo_toolbar from uo_toolbar_reporte within w_pr_planilla_acumulado_new
+integer x = 18
+integer y = 20
+integer width = 3799
+integer taborder = 50
+boolean border = false
+end type
+
+on uo_toolbar.destroy
+call uo_toolbar_reporte::destroy
+end on
+
+type io_busqueda from uo_pr_busqueda within w_pr_planilla_acumulado_new
+event destroy ( )
+integer x = 23
+integer y = 548
+integer width = 1728
+integer height = 76
+integer taborder = 80
+boolean border = false
+end type
+
+on io_busqueda.destroy
+call uo_pr_busqueda::destroy
+end on
+
+type pb_condiciones from u_pb within w_pr_planilla_acumulado_new
+integer x = 3662
+integer y = 176
+integer width = 137
+integer height = 112
+integer taborder = 10
+string text = ""
+boolean originalsize = true
+string picturename = "pr_prop.bmp"
+end type
+
+type dw_1 from u_dw_multiple within w_pr_planilla_acumulado_new
+integer x = 18
+integer y = 644
+integer width = 3794
+integer height = 1492
+integer taborder = 110
+string dataobject = "dw_pr_planilla_acumulada_new"
+boolean hscrollbar = true
+boolean vscrollbar = true
+boolean livescroll = true
+borderstyle borderstyle = stylelowered!
+end type
+
+event clicked;call super::clicked;Post f_ordenar_datawindow (this, dwo)
+end event
+
+type mle_1 from multilineedit within w_pr_planilla_acumulado_new
+boolean visible = false
+integer x = 2875
+integer y = 24
+integer width = 713
+integer height = 436
+integer taborder = 100
+boolean bringtotop = true
+integer textsize = -10
+integer weight = 400
+fontcharset fontcharset = ansi!
+fontpitch fontpitch = variable!
+fontfamily fontfamily = swiss!
+string facename = "Arial"
+long textcolor = 33554432
+boolean hscrollbar = true
+boolean vscrollbar = true
+borderstyle borderstyle = stylelowered!
+end type
+
+type dw_position from datawindow within w_pr_planilla_acumulado_new
+integer x = 18
+integer y = 152
+integer width = 3799
+integer height = 388
+integer taborder = 20
+string title = "none"
+string dataobject = "dw_pr_planilla_acumulado_position"
+boolean livescroll = true
+borderstyle borderstyle = styleraised!
+end type
+
+event itemchanged;long ll_null
+string ls_fuenteNegrita
+setnull(ll_null)
+
+Choose Case dwo.name
+	Case "alltipoplanilla"
+		if data = "S" then
+			SetItem (1, "TipoPlanilla", str_global.gv_null_string)
+			SetItem (1, "allTipoProceso", 'S')
+			SetItem (1, "TipoProceso", str_global.gv_null_string)
+		else
+			SetItem( 1, "TipoPlanilla" , str_payroll.gv_defa_tipoplanilla)
+			if pb_tproceso.visible = False Then
+				post wf_filtrar_tipoproceso()
+			end if
+		end if
+	Case "tipoplanilla"	
+		if data <> "" then
+			if pb_tproceso.visible = False Then
+				post wf_filtrar_tipoproceso()
+			end if
+		end if
+		
+	Case "allcentrocosto"
+		if data = "S" then
+			SetItem (1, "CentroCosto", str_global.gv_null_string)
+			pb_ccosto.enabled = False
+			this.object.t_seleccionados.visible = False
+			this.object.centrocosto.visible = True
+		else
+			pb_ccosto.enabled = True
+			pb_ccosto.event clicked( )
+		end if	
+		
+	Case "allempleado"
+		if data = "S" then
+			SetItem (1, "Empleado", ll_null)
+			pb_empleado.enabled = False
+			this.object.t_seleccionadosempleado.visible = False
+			this.object.empleado.visible = True
+		else
+			pb_empleado.enabled = True
+			pb_empleado.event clicked( )
+		end if
+	
+	Case "allperiodo"
+		if data = "S" then 
+			SetItem (1, "periodo", str_global.gv_null_string)
+			SetItem (1, "TipoProceso", str_global.gv_null_string)
+		else
+			SetItem (1, "periodo",  LEFT(str_payroll.gv_periodo,4)+"0101" )
+			if pb_tproceso.visible = False Then
+				post wf_filtrar_tipoproceso()
+			end if
+		end if
+	
+	Case "periodo"
+		if data <> "" then 
+			if pb_tproceso.visible = False Then
+				post wf_filtrar_tipoproceso()
+			end if
+		end if
+		
+	Case "alltipoproceso"
+		if data = "S" then 
+			SetItem (1, "tipoproceso", str_global.gv_null_string)
+			this.object.t_seleccionadostproceso.visible = false
+			pb_tproceso.enabled = False
+			is_selecttipoproceso = ''
+		else
+			pb_tproceso.enabled = True
+			if pb_tproceso.visible = True Then
+				pb_tproceso.event clicked( )
+			else
+				post wf_filtrar_tipoproceso()			
+			end if
+	
+		end if
+	
+	Case "tipoproceso"
+		if len(data) > 0 then
+			is_selecttipoproceso = "'" + data + "' "
+		end if
+	
+	Case "allconcepto"
+		if data = "S" then
+			SetItem (1, "concepto", str_global.gv_null_string)
+			pb_concepto.enabled = False
+		else
+			pb_concepto.enabled = True
+			pb_concepto.event clicked( )
+		end if
+		
+	Case "flagdetalle"
+		if data = "S" then
+			dw_1.Modify ( "Datawindow.Detail.Height = 48")
+			ls_fuenteNegrita = '700'
+		else
+			ls_fuenteNegrita = '400'
+			dw_1.Modify ( "Datawindow.Detail.Height = 0")
+		end if
+		// 700 negrita
+		// 400 normal		
+		for i = 5 to 17
+			dw_1.Modify ( "compute_"+string(i)+".Font.Weight = " + ls_fuenteNegrita )		
+		next
+	Case "flagsello"
+		if data = "S" then
+			dw_1.Modify('p_sello.visible=true')
+			dw_1.Modify('p_sello.filename="'+wf_sql_ruta_sello()+'"')
+			wf_posicionsello()
+		else
+			dw_1.Modify('p_sello.visible=false')
+		end if
+End Choose
+end event
+
