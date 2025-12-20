@@ -1,0 +1,36 @@
+
+USE [testing5]
+GO
+
+/****** Object:  Table [dbo].[RTPS_AR18_REM]    Script Date: 19/12/2025 11:21:02 ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE TABLE [dbo].[RTPS_AR18_REM](
+	[ID] [int] IDENTITY(1,1) NOT NULL,
+	[TIPODOC] [char](2) NULL,
+	[NUMDOC] [char](15) NULL,
+	[CODCON] [char](4) NULL,
+	[MONTODEV] [money] NULL,
+	[MONTOPAG] [money] NULL,
+	[PERIODO] [char](6) NULL,
+	[COMPANIASOCIO] [char](8) NULL,
+	[TIPOINGRESO] [char](1) NULL,
+	[INDERROR] [char](1) NULL,
+	[ULTIMOUSUARIOGENER] [char](20) NULL,
+	[ULTIMAFECHAGENER] [datetime] NULL,
+	[UltimoUsuario] [char](20) NULL,
+	[UltimaFechaModif] [datetime] NULL,
+	[MontoDeven] [varchar](20) NULL,
+	[MontoPagado] [varchar](20) NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[ID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+
