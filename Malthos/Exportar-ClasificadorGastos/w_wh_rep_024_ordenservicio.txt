@@ -1,0 +1,1134 @@
+forward
+global type w_wh_rep_024_ordenservicio from w_windowbase
+end type
+type dw_position_doc from datawindow within w_wh_rep_024_ordenservicio
+end type
+type cb_centrocosto from u_cb within w_wh_rep_024_ordenservicio
+end type
+type cb_commodity from u_cb within w_wh_rep_024_ordenservicio
+end type
+type cb_clasificadorgasto from u_cb within w_wh_rep_024_ordenservicio
+end type
+type cb_search from u_cb within w_wh_rep_024_ordenservicio
+end type
+type cb_proveedor from u_cb within w_wh_rep_024_ordenservicio
+end type
+type t from tab within w_wh_rep_024_ordenservicio
+end type
+type p1 from userobject within t
+end type
+type dw_numero from datawindow within p1
+end type
+type p1 from userobject within t
+dw_numero dw_numero
+end type
+type p2 from userobject within t
+end type
+type dw_report from datawindow within p2
+end type
+type p2 from userobject within t
+dw_report dw_report
+end type
+type p3 from userobject within t
+end type
+type dw_commodity from datawindow within p3
+end type
+type p3 from userobject within t
+dw_commodity dw_commodity
+end type
+type p4 from userobject within t
+end type
+type dw_responsable from datawindow within p4
+end type
+type p4 from userobject within t
+dw_responsable dw_responsable
+end type
+type p5 from userobject within t
+end type
+type dw_detalle from datawindow within p5
+end type
+type p5 from userobject within t
+dw_detalle dw_detalle
+end type
+type t from tab within w_wh_rep_024_ordenservicio
+p1 p1
+p2 p2
+p3 p3
+p4 p4
+p5 p5
+end type
+type dw_position from u_dw within w_wh_rep_024_ordenservicio
+end type
+end forward
+
+global type w_wh_rep_024_ordenservicio from w_windowbase
+integer x = 37
+integer y = 316
+integer width = 6318
+integer height = 1592
+string title = "024 - Detalle de Ordenes de Servicio"
+boolean controlmenu = true
+boolean resizable = true
+windowtype windowtype = main!
+dw_position_doc dw_position_doc
+cb_centrocosto cb_centrocosto
+cb_commodity cb_commodity
+cb_clasificadorgasto cb_clasificadorgasto
+cb_search cb_search
+cb_proveedor cb_proveedor
+t t
+dw_position dw_position
+end type
+global w_wh_rep_024_ordenservicio w_wh_rep_024_ordenservicio
+
+type variables
+String iv_original_sql1, iv_original_sql2, iv_original_sql3
+String iv_original_sql4, iv_original_sql5
+datawindow dw_report, dw_commodity, dw_position2, dw_numero
+datawindow dw_responsable, dw_detalle
+datawindowchild dwc_tipoadj, dwc_tipoproceso, dwc_acuerdomesa
+datawindowchild dwc_clasifgasto // mj
+end variables
+
+forward prototypes
+public subroutine wf_open ()
+public subroutine wf_prepare_sql ()
+public subroutine wf_print ()
+public function integer wf_commandbutton (string par_button)
+end prototypes
+
+public subroutine wf_open ();m_main.mf_menu_change("m_print","enabled")
+
+dw_numero      = t.p1.dw_numero 
+dw_report 		= t.p2.dw_report
+dw_commodity 	= t.p3.dw_commodity
+dw_responsable = t.p4.dw_responsable
+dw_detalle = t.p5.dw_detalle
+
+dw_position.SetTransObject(SQLCA)
+dw_position_Doc.SetTransObject(SQLCA)
+dw_numero.SetTransObject(SQLCA)
+dw_report.SetTransObject(SQLCA)
+dw_commodity.SetTransObject(SQLCA)
+dw_responsable.SetTransObject(SQLCA)
+dw_detalle.SetTransObject(SQLCA)
+
+dw_position.GetChild("proceso",dwc_tipoproceso)
+dwc_tipoproceso.SetTransObject(SQLCA)
+IF dwc_tipoproceso.Retrieve(str_global.gv_companyowner) = 0 THEN dwc_tipoproceso.InsertRow(0)
+
+dw_position.GetChild("tipoproceso",dwc_tipoadj)
+dwc_tipoadj.SetTransObject(SQLCA)
+dwc_tipoadj.InsertRow(0)
+//mj ini
+dw_position.GetChild("descripcionespecifica",dwc_clasifgasto)
+dwc_clasifgasto.SetTransObject(SQLCA)
+dwc_clasifgasto.InsertRow(0)
+//IF dwc_tipoadj.Retrieve(dw_position.GetItemString(1,"numerocompromiso")) = 0 THEN dwc_tipoadj.InsertRow(0)
+//IF dwc_clasifgasto.Retrieve("2025") = 0 THEN dwc_clasifgasto.InsertRow(0)
+//mj fin
+//------------------>>>>
+dw_position_Doc.GetChild('nro', dwc_acuerdomesa)
+dwc_acuerdomesa.SetTransObject(SQLCA)
+dwc_acuerdomesa.InsertRow(0)
+//<<<<--------------------------
+
+date w_desde, w_hasta
+f_calculate_period_first_and_last_day(str_global.gv_period_voucher, w_desde, w_hasta)
+dw_position.InsertRow(0)
+dw_position.setitem(1,"Dias_atraso_all","S") 
+dw_position.setitem(1,"Compania_all",	 "N") 
+dw_position.setitem(1,"Compania",   	left(str_global.gv_companyowner,6))
+dw_position.SetItem(1,"Proveedor_all", "S")
+dw_position.setitem(1,"Fechadesde",		Date("01-"+ String(Month(Today()), "00") + "-" + String(Year(Today()))))
+dw_position.setitem(1,"FechaHasta",		today())
+dw_position.setitem(1,"Estado_all",		"S")
+dw_position.setitem(1,"EstadoDetalle_all", "S")
+dw_position.setitem(1,"Commodity_all", "S")
+dw_position.setitem(1,"Monto_all",		"N")
+dw_position.setitem(1,"MontoDesde",		0)
+dw_position.setitem(1,"MontoHasta",		10000000)
+dw_position.setitem(1,"Moneda",				"LO")
+dw_position.setitem(1,"PrefijoDocumento",	"00")
+dw_position.setitem(1,"CentroCosto_all", "S")
+dw_position.setitem(1,"Pyme_all", 		"S")
+dw_position.setitem(1,"FechaAprobacion_desde",	w_desde)
+dw_position.setitem(1,"FechaAprobacion_Hasta",	w_hasta)
+dw_position.setitem(1,"FechaAprobacion_all",		"N")
+dw_position.SetItem(1,"ContratoEstado","T")
+dw_position.SetItem(1,"Proceso_All","S")
+dw_position.SetItem(1,"TipoProceso_All","S")
+dw_position.setitem(1,"clasificadorgasto_all", "S") //mj
+dw_position.modify("PrefijoDocumento.visible=0")
+dw_position.modify("PrefijoDocumento_t.visible=0")
+
+dw_position_Doc.InsertRow(0)
+dw_position_Doc.SetItem(1,"Procedencia_all", "S")
+dw_position_Doc.SetItem(1,"nro_all", "S")
+dw_position_Doc.SetItem(1,"tipo_all",	"S")
+
+dw_numero.modify("DataWindow.Print.preview = yes")
+dw_report.modify("DataWindow.Print.preview = yes")
+dw_commodity.modify("DataWindow.Print.preview = yes")
+dw_responsable.modify("DataWindow.Print.preview = yes")
+dw_detalle.modify("DataWindow.Print.preview = yes")
+
+iv_original_sql1 = dw_numero.Describe("DataWindow.Table.Select")
+iv_original_sql2 = dw_report.Describe("DataWindow.Table.Select")
+iv_original_sql3 = dw_commodity.Describe("DataWindow.Table.Select")
+iv_original_sql4 = dw_responsable.Describe("DataWindow.Table.Select")
+iv_original_sql5 = dw_detalle.Describe("DataWindow.Table.Select")
+
+f_change_voucher_titles(dw_position)
+f_security_fields_unload("D",dw_position)
+
+f_format_fields("QUANTITY",    dw_commodity, "cantidad")
+
+dw_position.Modify("detalle.visible = 0")
+
+//	Registrar Objetos Resize
+io_resize.uf_Register(t, 7)
+io_resize.uf_Register(dw_numero, 7)
+io_resize.uf_Register(dw_report, 7)
+io_resize.uf_Register(dw_responsable, 7)
+io_resize.uf_Register(dw_commodity, 7)
+io_resize.uf_Register(dw_detalle, 7)
+
+end subroutine
+
+public subroutine wf_prepare_sql ();String   w_compania, w_where, w_estado, w_estadodet, w_moneda, w_prefijodocumento, w_centrocosto, w_where_cc
+string   w_commodity, w_pyme, w_contratoestado, w_proceso, w_tipoproceso, w_tipodoc, w_nrodoc, w_proced,w_descripcionespecifica //mj
+Datetime w_desde, w_hasta, w_aprobaciondesde, w_aprobacionhasta
+Long     w_proveedor, w_row,m,p, w_dias
+Decimal  w_montodesde, w_montohasta
+integer w_locadorservicio //mj
+any  la_null	//mj
+SetNull(la_null)	//mj ini
+SetNull(w_locadorservicio)
+
+dw_position.AcceptText()
+dw_position_doc.AcceptText()
+
+w_compania  		= dw_position.GetItemString(1, "Compania")
+w_estado    			= dw_position.GetItemString(1, "Estado")
+w_estadodet 		= dw_position.GetItemString(1, "EstadoDetalle")
+w_desde     			= DateTime(dw_position.GetItemDate(1, "FechaDesde"),Time("00:00:00"))
+w_hasta     			= DateTime(dw_position.GetItemDate(1, "FechaHasta"),time("23:59:59"))
+w_proveedor 		= dw_position.GetItemDecimal(1, "Proveedor")
+w_montodesde		= dw_position.GetItemDecimal(1, "MontoDesde")
+w_montohasta		= dw_position.GetItemDecimal(1, "MontoHasta")
+w_prefijodocumento	= dw_position.GetItemstring(1,"PrefijoDocumento") + "%"
+w_moneda 			= dw_position.GetItemSTring(1, "Moneda")
+w_aprobaciondesde = DateTime(dw_position.GetItemDate(1, "FechaAprobacion_Desde"),Time("00:00:00"))
+w_aprobacionhasta = DateTime(dw_position.GetItemDate(1, "FechaAprobacion_Hasta"),time("23:59:59"))
+w_centrocosto 		= dw_position.GetItemString(1,"CentroCosto")
+w_commodity	  	= dw_position.getitemstring(1,"Commodity")
+w_pyme		  		= dw_position.getitemstring(1,"Pyme")
+w_dias		  		= dw_position.getitemdecimal(1,"dias_atraso")
+w_contratoestado	= dw_position.GetItemString(1,"ContratoEstado")
+w_proceso     		= dw_position.GetItemString(1, "Proceso")
+w_tipoproceso 		= dw_position.GetItemString(1, "TipoProceso")
+w_descripcionespecifica	= dw_position.getitemstring(1,"descripcionespecifica") //mj
+w_locadorservicio	= integer(dw_position.getitemnumber(1,"locadorservicio")) //mj
+
+w_tipodoc= dw_position_doc.GetItemString(1, "tipo")
+w_nrodoc = dw_position_doc.GetItemString(1, "nro")
+w_proced = dw_position_doc.GetItemString(1, "procedencia")
+
+IF IsNull(w_descripcionespecifica) THEN	//mj ini
+    w_descripcionespecifica = ""
+ELSE
+    w_descripcionespecifica = Upper( Trim(w_descripcionespecifica) )
+END IF
+IF IsNull(w_locadorservicio) OR w_locadorservicio = 0 THEN
+    SetNull(w_locadorservicio)
+ELSE
+    w_locadorservicio = 1
+END IF //mj fin
+If Isnull(w_montodesde) Then
+	w_montodesde = 0
+End If
+If Isnull(w_montohasta) Then
+	w_montohasta = 0
+End If
+
+Choose case t.selectedtab
+case 1
+	w_where = iv_original_sql1
+case 2
+	w_where = iv_original_sql2
+case 3
+	w_where = iv_original_sql3
+case 4
+	w_where = iv_original_sql4
+case 5
+	w_where = iv_original_sql5
+End Choose	
+If dw_position.GetItemString(1,"Compania_all")="N" Then
+	If Not(IsNull(w_compania)) Then
+		w_where = f_add_where_to_sql(w_where," AND (Compromiso.CompaniaCodigo = :pa_compania) ")
+	Else
+		MessageBox("Error", "Debe indicar la Compañia")
+		Return
+	End If
+End If
+If dw_position.GetItemString(1,"Commodity_all")="N" Then
+	If Not(IsNull(w_commodity)) Then
+		w_where = f_add_where_to_sql(w_where," AND (CompromisoDetalle.Commodity = :commodity) ")
+	Else
+		MessageBox("Error", "Debe indicar el Commodity")
+		Return
+	End If
+End If
+If dw_position.GetItemString(1,"Pyme_all")="N" Then
+	If Not(IsNull(w_pyme)) Then
+		w_where = f_add_where_to_sql(w_where," AND (PersonaMast.PYMEFlag = :pyme ) ")
+	End If
+End If
+If dw_position.GetItemString(1, "Proveedor_all")="N" Then
+	If Not(IsNull(w_proveedor)) Or w_proveedor<>0 Then
+		w_where = f_add_where_to_sql(w_where," AND (Compromiso.Proveedor = :pa_proveedor) ")
+	Else
+		MessageBox("Error", "Debe indicar el Proveedor")
+		Return
+	End If
+End If
+If dw_position.GetItemString(1, "FechaAprobacion_all")="N" Then
+	w_where = f_add_where_to_sql(w_where," AND Compromiso.FechaAprobacion >= :fechaaprob_desde and Compromiso.FechaAprobacion <=   :fechaaprob_hasta ")
+end if
+If dw_position.GetItemString(1, "CentroCosto_all")="N" Then
+	w_where = f_add_where_to_sql(w_where," AND CompromisoDetalle.CentroCosto =:par_centrocosto ")
+	
+	w_where_cc=' AND (SELECT TOP(1) R.DefaultPrime FROM AP_OrdenServicioRequisicion, WH_Requisiciones R '&
+				+'WHERE ( AP_OrdenServicioRequisicion.CompaniaSocio = R.CompaniaSocio ) and ( AP_OrdenServicioRequisicion.RequisicionNumero = R.RequisicionNumero ) and '&
+				+	'(( AP_OrdenServicioRequisicion.NumeroCompromiso = Compromiso.NumeroCompromiso ) ) AND AP_OrdenServicioRequisicion.SecuenciaCompromiso=CompromisoDetalle.LineaDetalle )= :par_centrocosto '
+	//w_where =  f_add_where_to_sql (w_where,w_where_cc)	
+end if
+If dw_position.GetItemString(1, "Monto_all")="N" Then
+	w_where = f_add_where_to_sql(w_where," AND (MontoCompromiso >= :par_montodesde) ")
+	w_where = f_add_where_to_sql(w_where," AND (MontoCompromiso <= :par_montohasta) ")
+End If
+w_where = f_add_where_to_sql(w_where," AND (MonedaDocumento = :par_moneda) ")
+If dw_position.GetItemString(1, "Estado_all")="N" Then
+	If Not(IsNull(w_estado)) Then
+		w_where = f_add_where_to_sql(w_where," AND (Compromiso.EstadoCompromiso = :pa_estado) ")
+	Else
+		MessageBox("Error", "Debe indicar el Estado")
+		Return
+	End If
+//Else
+//	If t.selectedtab <> 1 Then
+//			w_where = f_add_where_to_sql(w_where," AND (Compromiso.EstadoCompromiso <> :pa_estado) ")
+//	End If		
+End If
+
+If dw_position_doc.GetItemString(1, "tipo_all")="N"  Then
+	If Not(IsNull(w_tipodoc)) Then
+		w_where =  f_add_where_to_sql (w_where," AND ( Compromiso.TipoDocumento = '"+w_tipodoc+"' ) ")		
+	Else
+		MessageBox("Error", "Debe indicar el tipo de Documento")
+		Return
+	End If
+End if
+
+If Not (IsNull(w_nrodoc) or w_nrodoc='') Then
+		w_where =  f_add_where_to_sql (w_where," AND ( Compromiso.NroDocumento LIKE '%"+w_nrodoc+"%' ) ")
+End If
+
+If dw_position_doc.GetItemString(1, "procedencia_all")="N"  Then
+	If Not(IsNull(w_proced)) Then
+		w_where =  f_add_where_to_sql (w_where," AND ( Compromiso.Procedencia = '"+w_proced+"' ) ")		
+	Else
+		MessageBox("Error", "Debe indicar la procedencia del Documento")
+		Return
+	End If
+End if
+
+
+choose case w_contratoestado
+case "T"
+case "C"
+	w_where =  f_add_where_to_sql (w_where,' AND (Compromiso.NumeroContrato is not null ) ' )		
+case "S"
+	w_where =  f_add_where_to_sql (w_where,' AND (Compromiso.NumeroContrato is null ) ' )			
+end choose
+
+If dw_position.GetItemString(1, "EstadoDetalle_all")="N" Then
+	If Not(IsNull(w_estadodet)) Then
+		w_where = f_add_where_to_sql(w_where," AND (CompromisoDetalle.TerminadoFlag = :pa_estadodet) ")
+	Else
+		MessageBox("Error", "Debe indicar el Estado")
+		Return
+	End If
+End If
+If Not (IsNull(w_proceso)) Then
+	w_where =  f_add_where_to_sql (w_where," AND SubString(Compromiso.LicitacionNumeroProceso,1,2) = '"+w_proceso + "'")
+End If
+If Not(IsNull(w_tipoproceso)) Then
+	w_where =  f_add_where_to_sql (w_where," AND SubString(Compromiso.LicitacionNumeroProceso,3,2) = '"+ w_tipoproceso +"'")
+End if
+
+debugbreak()
+Choose case t.selectedtab
+case 1
+	dw_numero.SetFilter("")
+	dw_numero.Filter()
+//	if dw_position.GetItemString(1, "Estado_all")="S" Then
+//		w_estado="AN"
+//	end if	
+//	string ret_code,w_sql
+//	w_SQL = "DataWindow.Table.Select='" + w_where + "'"
+//	ret_code = dw_numero.modify(w_SQL)
+//	messagebox(ret_code,w_sql) 
+	dw_numero.modify('DataWindow.Table.Select="' + w_where + '"')
+	dw_numero.Retrieve(w_compania, w_proveedor, w_desde, w_hasta, w_estado, w_montodesde, w_montohasta, &
+		w_estadodet, w_moneda,w_prefijodocumento, w_aprobaciondesde, w_aprobacionhasta, w_centrocosto, w_commodity, w_pyme, w_descripcionespecifica, w_locadorservicio) //mj
+	dw_numero.SetFocus()
+	if not isnull(w_dias) then
+		dw_numero.SetFilter("Dias = " + string(w_dias))
+		dw_numero.Filter()
+	end if
+	
+			
+	/* AGREGAR TRAMA ---DESPUES DE CARGAR EL DW->*/
+	string ls_dateTimeString, ls_selloAgua
+	
+	ls_dateTimeString = String(f_today(),"dd/mm/yyyy hh:mm")
+	ls_selloAgua = str_global.gv_userid + " - " + ls_dateTimeString
+	
+	f_agregar_tramado_dw(dw_numero,ls_selloAgua,'P')
+	/*<-------------*/
+case 2
+	decimal w_monto
+	string  w_compromiso
+	dw_report.SetFilter("")
+	dw_report.Filter()	
+//	if dw_position.GetItemString(1, "Estado_all")="S" Then
+//		w_estado="AN"
+//	end if	
+	dw_report.SetRedraw(false)
+	dw_report.modify('DataWindow.Table.Select="' + w_where + '"')
+	w_row = dw_report.Retrieve(w_compania, w_proveedor, w_desde, w_hasta, w_estado, w_montodesde, w_montohasta, &
+		w_estadodet,w_moneda,w_prefijodocumento, w_aprobaciondesde, w_aprobacionhasta, w_centrocosto, w_commodity, w_pyme, w_descripcionespecifica, w_locadorservicio) //mj
+	dw_report.SetFocus()
+	w_proveedor = -1
+	w_compromiso =''
+	w_monto = 0
+	for m=1 to w_row
+		if w_proveedor <> dw_report.getitemdecimal(m,"Proveedor") then
+			w_proveedor = dw_report.getitemdecimal(m,"Proveedor")
+			w_monto = 0
+		end if
+		if w_compromiso <> dw_report.getitemstring(m,"NumeroCompromiso") then
+			w_compromiso = dw_report.getitemstring(m,"NumeroCompromiso") 
+			w_monto = w_monto + dw_report.getitemdecimal(m,"MontoCompromiso")
+			for p=1 to m
+				if w_proveedor = dw_report.getitemdecimal(p,"Proveedor") then
+					dw_report.setitem(p,"Total", w_monto)		
+				end if
+			next
+		end if
+	
+	next
+	if not isnull(w_dias) then
+		dw_report.SetFilter("Dias = " + string(w_dias))
+		dw_report.Filter()
+	end if
+	/* AGREGAR TRAMA ---DESPUES DE CARGAR EL DW->*/
+
+	
+	ls_dateTimeString = String(f_today(),"dd/mm/yyyy hh:mm")
+	ls_selloAgua = str_global.gv_userid + " - " + ls_dateTimeString
+	
+	f_agregar_tramado_dw(dw_report,ls_selloAgua,'P')
+	/*<-------------*/	
+	dw_report.SetRedraw(true)
+	
+case 3
+	dw_commodity.SetFilter("")
+	dw_commodity.Filter()
+//	if dw_position.GetItemString(1, "Estado_all")="S" Then
+//		w_estado="AN"
+//	end if	
+	dw_commodity.modify('DataWindow.Table.Select="' + w_where + '"')
+	dw_commodity.Retrieve(w_compania, w_proveedor, w_desde, w_hasta, w_estado, w_montodesde, w_montohasta, &
+		w_estadodet, w_moneda,w_prefijodocumento, w_aprobaciondesde, w_aprobacionhasta, w_centrocosto, w_commodity, w_pyme, w_descripcionespecifica, w_locadorservicio)
+	if not isnull(w_dias) then
+		dw_commodity.SetFilter("Dias = " + string(w_dias))
+		dw_commodity.Filter()
+	end if
+	dw_commodity.SetFocus()
+	/* AGREGAR TRAMA ---DESPUES DE CARGAR EL DW->*/
+
+	
+	ls_dateTimeString = String(f_today(),"dd/mm/yyyy hh:mm")
+	ls_selloAgua = str_global.gv_userid + " - " + ls_dateTimeString
+	
+	f_agregar_tramado_dw(dw_commodity,ls_selloAgua,'P')
+	/*<-------------*/
+case 4
+	dw_responsable.SetFilter("")
+	dw_responsable.Filter()
+//	if dw_position.GetItemString(1, "Estado_all")="S" Then
+//		w_estado="AN"
+//	end if	
+
+	dw_responsable.modify('DataWindow.Table.Select="' + w_where + '"')
+	dw_responsable.Retrieve(w_compania, w_proveedor, w_desde, w_hasta, w_estado, w_montodesde, w_montohasta, &
+		w_estadodet, w_moneda,w_prefijodocumento, w_aprobaciondesde, w_aprobacionhasta, w_centrocosto, w_commodity, w_pyme, w_descripcionespecifica, w_locadorservicio)
+	dw_responsable.SetFocus()
+	if not isnull(w_dias) then
+		dw_responsable.SetFilter("Dias = " + string(w_dias))
+		dw_responsable.Filter()
+	end if
+	/* AGREGAR TRAMA ---DESPUES DE CARGAR EL DW->*/
+
+	
+	ls_dateTimeString = String(f_today(),"dd/mm/yyyy hh:mm")
+	ls_selloAgua = str_global.gv_userid + " - " + ls_dateTimeString
+	
+	f_agregar_tramado_dw(dw_responsable,ls_selloAgua,'P')
+	/*<-------------*/	
+case 5
+	dw_detalle.SetFilter("")
+	dw_detalle.Filter()
+	dw_detalle.modify('DataWindow.Table.Select="' + w_where + '"')
+	dw_detalle.Retrieve(w_compania, w_proveedor, w_desde, w_hasta, w_estado, w_montodesde, w_montohasta, &
+		w_estadodet, w_moneda,w_prefijodocumento, w_aprobaciondesde, w_aprobacionhasta, w_centrocosto, w_commodity, w_pyme, w_descripcionespecifica, w_locadorservicio)
+	dw_detalle.SetFocus()
+	if not isnull(w_dias) then
+		dw_detalle.SetFilter("Dias = " + string(w_dias))
+		dw_detalle.Filter()
+	end if
+	/* AGREGAR TRAMA ---DESPUES DE CARGAR EL DW->*/
+	
+	ls_dateTimeString = String(f_today(),"dd/mm/yyyy hh:mm")
+	ls_selloAgua = str_global.gv_userid + " - " + ls_dateTimeString
+	
+	f_agregar_tramado_dw(dw_detalle,ls_selloAgua,'P')
+	/*<-------------*/
+End Choose	
+end subroutine
+
+public subroutine wf_print ();Choose case t.selectedTab
+	case 1
+		dw_numero.Print()
+	case 2
+		dw_report.Print()
+	case 3
+		dw_commodity.Print()
+	case 4
+		dw_responsable.print()
+	case 5
+		dw_detalle.print()
+End Choose
+
+end subroutine
+
+public function integer wf_commandbutton (string par_button);str_pass w_str_pass
+s_account_flow ws_account_flow
+Long w_nuevo, w_secuencia, w_row, m
+String w_centrocosto, w_cuenta
+//dw_1.AcceptText()
+
+choose case par_button
+	
+case "cb_commodity"
+	str_global.gv_value_selected = str_global.gv_null_string	//Default
+	w_str_pass.po[1] = this
+	openwithparm (w_ma_wh_commodity_select,w_str_pass)
+	if Not(IsNull(str_global.gv_value_selected)) Then
+	//	w_nuevo = dw_detail.GetRow()
+	//	dw_detail.setitem(w_nuevo,'Commodity',		str_global.gv_value_selected)
+	//	dw_detail.setitem(w_nuevo,"Descripcion", 	f_sql_read_commodity_name(str_global.gv_value_selected))	
+	//	w_cuenta 	= f_sql_read_commodity_cuenta(str_global.gv_value_selected, &
+			//				dw_1.getitemstring(1,'CompaniaCodigo'), dw_detail.getitemstring(w_nuevo,'CentroCosto'))
+		//dw_detail.SetItem(w_nuevo,"CuentaContable",	w_cuenta)
+	End if	
+
+end choose
+return 0
+end function
+
+on w_wh_rep_024_ordenservicio.create
+int iCurrent
+call super::create
+this.dw_position_doc=create dw_position_doc
+this.cb_centrocosto=create cb_centrocosto
+this.cb_commodity=create cb_commodity
+this.cb_clasificadorgasto=create cb_clasificadorgasto
+this.cb_search=create cb_search
+this.cb_proveedor=create cb_proveedor
+this.t=create t
+this.dw_position=create dw_position
+iCurrent=UpperBound(this.Control)
+this.Control[iCurrent+1]=this.dw_position_doc
+this.Control[iCurrent+2]=this.cb_centrocosto
+this.Control[iCurrent+3]=this.cb_commodity
+this.Control[iCurrent+4]=this.cb_clasificadorgasto
+this.Control[iCurrent+5]=this.cb_search
+this.Control[iCurrent+6]=this.cb_proveedor
+this.Control[iCurrent+7]=this.t
+this.Control[iCurrent+8]=this.dw_position
+end on
+
+on w_wh_rep_024_ordenservicio.destroy
+call super::destroy
+destroy(this.dw_position_doc)
+destroy(this.cb_centrocosto)
+destroy(this.cb_commodity)
+destroy(this.cb_clasificadorgasto)
+destroy(this.cb_search)
+destroy(this.cb_proveedor)
+destroy(this.t)
+destroy(this.dw_position)
+end on
+
+event objectstartevent;call super::objectstartevent;s_account_flow ws_account_flow
+str_pass w_str_pass
+
+Choose case eventname
+	case "opened"
+		wf_open()
+
+	case "cb_commodity_clicked"
+		setnull(str_global.gv_value_selected)
+		w_str_pass.po[1] = this
+		str_global.gv_value_selected = str_global.gv_null_string//Clasificacion
+		openwithparm (w_ma_wh_commodity_select,w_str_pass)
+		if Not(IsNull(str_global.gv_value_selected)) Then
+			dw_position.setitem(1,'Commodity',str_global.gv_value_selected)
+			dw_position.Setitem(1,"commodity_all", "N")
+		End if
+		
+	case "cb_centrocosto_clicked"
+	ws_account_flow.codigocompletoflag = "N"
+	ws_account_flow.companyowner = dw_position.getitemstring(1,"Compania") + "00"
+	ws_account_flow.businessunit = str_global.gv$_unidadnegocio
+	w_str_pass.po[1]	= ws_account_flow
+	f_voucher_select_fields("COSTCENTER",dw_position,"CentroCosto",w_str_pass)
+	dw_position.setitem(1,"CentroCosto_all", "N")
+		
+	case "cb_clasificadorgasto_clicked"
+		string ls_numerocompromiso
+		
+		// Validar que se haya ingresado el año del compromiso mj ini
+		ls_numerocompromiso = dw_position.getitemstring(1, "numerocompromiso")
+
+		// Preparar parámetros para la ventana de selección
+		setnull(str_global.gv_value_selected)
+		w_str_pass.s[1] = ls_numerocompromiso  // Pasar el año como parámetro
+		w_str_pass.po[1] = this
+		
+		// Abrir ventana de selección
+//		str_global.gv_value_selected = str_global.gv_null_string		12/30
+//		openwithparm(w_ma_clasificadorgasto_select, w_str_pass)	12/30
+		w_str_pass.s[1] = 'Modificar'
+		w_str_pass.s[2] = "00"
+		f_voucher_select_fields("REFERENCIAFISCAL_OS",dw_position,"XX",w_str_pass)
+		
+		// Si seleccionó algo, actualizar el filtro mj fin
+		if NOT IsNull(str_global.gv_value_selected) AND Trim(str_global.gv_value_selected) <> "" then
+			dw_position.setitem(1, "descripcionespecifica", str_global.gv_value_selected)
+			dw_position.setitem(1, "clasificadorgasto_all", "N")
+		end if
+		
+	case "cb_search_clicked"
+		wf_prepare_sql()
+		
+	case "cb_proveedor_clicked"
+		setnull(str_global.gv_number_selected)
+		if not isvalid(w_ma_persona_select) then
+			str_pass.po [1] 	= this
+			str_pass.s[1]		= "P" //Proveedor
+  			openwithparm(w_ma_persona_select,str_pass)
+		end if 
+
+	case "persona_selected"
+		if not isnull(str_global.gv_number_selected) then
+			dw_position.setitem(1,"Proveedor",str_global.gv_number_selected)
+		end if 
+		f_close_persona_select()		
+	
+	case "closed"
+		m_wh_main.mf_menu_change("m_print","disabled") 			
+		m_wh_main.mf_menu_change("m_complete","enabled") 
+
+End Choose
+end event
+
+type dw_position_doc from datawindow within w_wh_rep_024_ordenservicio
+integer x = 3086
+integer width = 1307
+integer height = 212
+integer taborder = 60
+string title = "none"
+string dataobject = "dw_wh_po_filtro_doc_os"
+boolean border = false
+boolean livescroll = true
+end type
+
+event itemchanged;string w_null
+setnull(w_null)
+
+Choose case dwo.name
+case "tipo"
+	if not isnull(data) then
+		dwc_acuerdomesa.retrieve( data, 'T')
+		setitem( 1, 'nro', w_null)
+		//setitem( 1, 'procedencia', w_null)
+	end if
+	
+case "tipo_all"
+	if data = 'S' then
+		dwc_acuerdomesa.retrieve( 'T', 'T')
+		setitem( 1, 'tipo', w_null)
+	end if
+	
+case "nro_all"
+	if data = 'S' then
+		setitem( 1, 'nro', w_null)
+	end if
+	
+case "procedencia_all"
+	if data = 'S' then
+		setitem( 1, 'procedencia', w_null)
+	end if	
+	
+//	if not isnull(data) then
+//		setitem( 1, 'procedencia', f_procedencia_acuerdomesa(data))
+//	end if	
+		
+End Choose	
+end event
+
+type cb_centrocosto from u_cb within w_wh_rep_024_ordenservicio
+integer x = 2757
+integer y = 140
+integer width = 105
+integer height = 72
+integer taborder = 50
+boolean bringtotop = true
+fontcharset fontcharset = ansi!
+string text = "..."
+end type
+
+type cb_commodity from u_cb within w_wh_rep_024_ordenservicio
+integer x = 2176
+integer y = 364
+integer width = 105
+integer height = 72
+integer taborder = 30
+boolean bringtotop = true
+fontcharset fontcharset = ansi!
+boolean enabled = false
+string text = "..."
+end type
+
+type cb_clasificadorgasto from u_cb within w_wh_rep_024_ordenservicio
+integer x = 4375
+integer y = 212
+integer width = 110
+integer height = 72
+integer taborder = 275
+boolean bringtotop = true
+fontcharset fontcharset = ansi!
+string text = "..."
+end type
+
+type cb_search from u_cb within w_wh_rep_024_ordenservicio
+integer x = 4718
+integer y = 364
+integer taborder = 10
+string text = "&Buscar"
+boolean default = true
+end type
+
+type cb_proveedor from u_cb within w_wh_rep_024_ordenservicio
+integer x = 937
+integer y = 60
+integer width = 105
+boolean enabled = false
+string text = "..."
+end type
+
+type t from tab within w_wh_rep_024_ordenservicio
+event create ( )
+event destroy ( )
+integer x = 23
+integer y = 512
+integer width = 3397
+integer height = 960
+integer taborder = 40
+integer textsize = -8
+integer weight = 400
+fontcharset fontcharset = ansi!
+fontpitch fontpitch = variable!
+fontfamily fontfamily = swiss!
+string facename = "MS Sans Serif"
+long backcolor = 12632256
+boolean raggedright = true
+integer selectedtab = 1
+p1 p1
+p2 p2
+p3 p3
+p4 p4
+p5 p5
+end type
+
+on t.create
+this.p1=create p1
+this.p2=create p2
+this.p3=create p3
+this.p4=create p4
+this.p5=create p5
+this.Control[]={this.p1,&
+this.p2,&
+this.p3,&
+this.p4,&
+this.p5}
+end on
+
+on t.destroy
+destroy(this.p1)
+destroy(this.p2)
+destroy(this.p3)
+destroy(this.p4)
+destroy(this.p5)
+end on
+
+event clicked;if index = 2 or index = 3 then 
+	dw_position.Modify("detalle.visible = 1")
+else
+	dw_position.Modify("detalle.visible = 0")
+end if
+end event
+
+type p1 from userobject within t
+integer x = 18
+integer y = 112
+integer width = 3360
+integer height = 832
+long backcolor = 12632256
+string text = "Por Nro. Documento"
+long tabbackcolor = 12632256
+string picturename = "ComputeToday!"
+long picturemaskcolor = 553648127
+dw_numero dw_numero
+end type
+
+on p1.create
+this.dw_numero=create dw_numero
+this.Control[]={this.dw_numero}
+end on
+
+on p1.destroy
+destroy(this.dw_numero)
+end on
+
+type dw_numero from datawindow within p1
+integer width = 3319
+integer height = 876
+integer taborder = 40
+boolean bringtotop = true
+string dataobject = "dw_wh_rep_024_por_numero"
+boolean hscrollbar = true
+boolean vscrollbar = true
+end type
+
+type p2 from userobject within t
+event create ( )
+event destroy ( )
+integer x = 18
+integer y = 112
+integer width = 3360
+integer height = 832
+long backcolor = 12632256
+string text = "Por Proveedor"
+long tabbackcolor = 12632256
+string picturename = "Picture!"
+long picturemaskcolor = 553648127
+dw_report dw_report
+end type
+
+on p2.create
+this.dw_report=create dw_report
+this.Control[]={this.dw_report}
+end on
+
+on p2.destroy
+destroy(this.dw_report)
+end on
+
+type dw_report from datawindow within p2
+integer width = 2752
+integer height = 948
+integer taborder = 60
+boolean bringtotop = true
+string dataobject = "dw_wh_rep_024_ordenservicio_proveedor"
+boolean hscrollbar = true
+boolean vscrollbar = true
+boolean livescroll = true
+end type
+
+type p3 from userobject within t
+event create ( )
+event destroy ( )
+integer x = 18
+integer y = 112
+integer width = 3360
+integer height = 832
+long backcolor = 12632256
+string text = "Por Commodity"
+long tabbackcolor = 12632256
+string picturename = "Globals!"
+long picturemaskcolor = 553648127
+dw_commodity dw_commodity
+end type
+
+on p3.create
+this.dw_commodity=create dw_commodity
+this.Control[]={this.dw_commodity}
+end on
+
+on p3.destroy
+destroy(this.dw_commodity)
+end on
+
+type dw_commodity from datawindow within p3
+integer width = 2752
+integer height = 948
+integer taborder = 70
+boolean bringtotop = true
+string dataobject = "dw_wh_rep_024_por_commodity"
+boolean hscrollbar = true
+boolean vscrollbar = true
+boolean livescroll = true
+end type
+
+type p4 from userobject within t
+integer x = 18
+integer y = 112
+integer width = 3360
+integer height = 832
+long backcolor = 12632256
+string text = "Por Responsable"
+long tabbackcolor = 12632256
+string picturename = "Custom076!"
+long picturemaskcolor = 553648127
+dw_responsable dw_responsable
+end type
+
+on p4.create
+this.dw_responsable=create dw_responsable
+this.Control[]={this.dw_responsable}
+end on
+
+on p4.destroy
+destroy(this.dw_responsable)
+end on
+
+type dw_responsable from datawindow within p4
+integer width = 3259
+integer height = 880
+integer taborder = 80
+boolean bringtotop = true
+string dataobject = "dw_wh_rep_024_por_responsable"
+boolean hscrollbar = true
+boolean vscrollbar = true
+boolean livescroll = true
+end type
+
+type p5 from userobject within t
+integer x = 18
+integer y = 112
+integer width = 3360
+integer height = 832
+long backcolor = 12632256
+string text = "Detalle"
+long tabbackcolor = 12632256
+long picturemaskcolor = 536870912
+dw_detalle dw_detalle
+end type
+
+on p5.create
+this.dw_detalle=create dw_detalle
+this.Control[]={this.dw_detalle}
+end on
+
+on p5.destroy
+destroy(this.dw_detalle)
+end on
+
+type dw_detalle from datawindow within p5
+integer y = 4
+integer width = 3090
+integer height = 876
+integer taborder = 10
+boolean bringtotop = true
+string dataobject = "dw_wh_rep_024_por_detalle"
+boolean hscrollbar = true
+boolean vscrollbar = true
+end type
+
+type dw_position from u_dw within w_wh_rep_024_ordenservicio
+integer x = 14
+integer width = 6048
+integer height = 484
+integer taborder = 60
+string dataobject = "dw_wh_rep_024_ordenservicio_position"
+boolean border = false
+end type
+
+event itemchanged;call super::itemchanged;DateTime w_desde, w_hasta
+Long w_proveedor
+SetNull(w_proveedor)
+SetNull(w_desde)
+SetNull(w_hasta)
+
+Choose case dwo.name
+	case "dias_atraso_all"
+		if data = "S" then
+			this.setitem(1,"dias_atraso", w_proveedor)
+		end if		
+		
+	case "pyme_all"
+		if data = "S" then
+			this.setitem(1,"Pyme", str_global.gv_null_string)
+		end if
+		
+	case "commodity_all"
+		If data = "S" Then
+			dw_position .SetItem(1, "Commodity", str_global.gv_null_string)
+			cb_commodity.enabled = false
+		Else
+			cb_commodity.enabled = True
+		End if
+		
+	case "compania_all"
+		If data = "S" Then
+			dw_position .SetItem(1, "Compania", str_global.gv_null_string)
+		End if
+		
+	case "centrocosto_all"
+		If data = "S" Then
+			dw_position .SetItem(1, "Centrocosto", str_global.gv_null_string)
+		End if
+
+	case "fechaaprobacion_all"
+		date w_fecha
+		setnull(w_fecha)
+		If data = "S" Then
+			dw_position .SetItem(1, "FechaAprobacion_desde", w_fecha)
+			dw_position .SetItem(1, "FechaAprobacion_hasta", w_fecha)			
+		End if
+
+	case "proveedor_all"
+		If data = "S" Then
+			dw_position .SetItem(1, "Proveedor", w_proveedor)
+			cb_proveedor.enabled = false
+		Else
+			cb_proveedor.enabled = True
+		End if
+
+	case "fecha_all"
+		If data = "S" Then
+			dw_position .SetItem(1, "FechaDesde", w_desde)
+			dw_position .SetItem(1, "FechaHasta", w_hasta)
+		End if
+
+	case "monto_all"
+		If data = "S" Then
+			dw_position.SetItem(1, "MontoDesde", 0)
+			dw_position.SetItem(1, "MontoHasta", 0)
+		End if
+
+	case "estado_all"
+		If data = "S" Then
+			dw_position .SetItem(1, "Estado", str_global.gv_null_string)
+		End if
+
+	case "estadodetalle_all"
+		If data = "S" Then
+			dw_position .SetItem(1, "EstadoDetalle", str_global.gv_null_string)
+		End if
+	
+	case "detalle"
+		If data ="S" Then
+			//dw_numero.Modify ( "Datawindow.Detail.Height = 65") 
+			dw_report.Modify ( "Datawindow.Detail.height.autosize=yes" )	
+			dw_report.Modify ( "Datawindow.Detail.Height = 65") 
+			dw_report.Modify ( "Datawindow.Header.Height = 381" )	
+			dw_commodity.Modify ( "Datawindow.Detail.Height = 65") 
+			dw_commodity.Modify ( "Datawindow.Header.Height = 381" )	
+		Else
+			//dw_numero.Modify ( "Datawindow.Detail.Height = 1") 
+			dw_report.Modify ( "Datawindow.Detail.height.autosize=no" )	
+			dw_report.Modify ( "Datawindow.Detail.Height = 1" )	
+			dw_report.Modify ( "Datawindow.Header.Height = 301" )	
+			dw_commodity.Modify ( "Datawindow.Detail.Height = 1" )	
+			dw_commodity.Modify ( "Datawindow.Header.Height = 301" )	
+		End If
+		
+	case "proceso"
+		dwc_tipoadj.Reset()
+		this.SetItem(1, "tipoproceso", str_global.gv_null_string)
+		If dwc_TipoAdj.Retrieve(This.GetItemString(1,"compania")+"00",data) = 0 Then dwc_TipoAdj.InsertRow(0)
+
+	case "tipoproceso_all"
+		If data = "S" Then
+			this.SetItem(1, "tipoproceso", str_global.gv_null_string)
+		End if		
+
+	case "commodity_all"
+		if data = "S" then
+			this.SetItem(1, "commodity", str_global.gv_null_string)
+			cb_commodity.enabled = False
+		Else
+			cb_commodity.enabled = True			
+		end if
+		
+	case "clasificadorgasto_all"	//mj
+		If data = "S" Then
+			dw_position .SetItem(1, "referenciafiscal", str_global.gv_null_string)
+			dw_position .SetItem(1, "descripcionespecifica", str_global.gv_null_string)
+		End if
+		
+	case "numerocompromiso"  //mj
+		 string ls_num, ls_sel
+		 long   ll_pos
+		 any    la_null
+		 SetNull(la_null)
+		 ls_num = Trim(String(data))
+		 // Si queda vacío: limpiar y dejar nulo válido en el DDDW
+		 IF IsNull(ls_num) OR ls_num = "" THEN
+			  this.SetItem(row, "numerocompromiso", "")
+			  this.SetItem(row, "descripcionespecifica", la_null)
+	
+			  dwc_clasifgasto.Reset()
+			  dwc_clasifgasto.InsertRow(0)
+			  dwc_clasifgasto.SetItem(1, "descripcion", "") // fila en blanco para la lista
+		 else
+				 // Normal: cargar lista para ese numerocompromiso
+			 this.SetItem(row, "numerocompromiso", ls_num)
+		
+			 dwc_clasifgasto.Reset()
+			 dwc_clasifgasto.Retrieve(ls_num)
+		
+			 // Insertar opción en blanco al inicio
+			 dwc_clasifgasto.InsertRow(0)
+			 dwc_clasifgasto.SetItem(1, "descripcion", "")
+		
+			 // Si el valor actual no existe en la nueva lista, limpiar a NULL
+			 ls_sel = this.GetItemString(row, "descripcionespecifica")
+			 IF NOT IsNull(ls_sel) AND Trim(ls_sel) <> "" THEN
+				  ll_pos = dwc_clasifgasto.Find("descripcion = '" + Trim(ls_sel) + "'", 1, dwc_clasifgasto.RowCount())
+				  IF ll_pos = 0 THEN
+						this.SetItem(row, "descripcionespecifica", la_null)
+				  END IF
+			 END IF
+		 END IF
+		
+End Choose
+end event
+

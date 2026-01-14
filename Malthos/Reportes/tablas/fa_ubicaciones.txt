@@ -1,0 +1,38 @@
+USE [testing5]
+GO
+
+/****** Object:  Table [dbo].[fa_ubicaciones]    Script Date: 1/14/2026 5:40:35 PM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE TABLE [dbo].[fa_ubicaciones](
+	[Ubicacion] [varchar](15) NOT NULL,
+	[Grupo01] [char](15) NULL,
+	[DescripcionLocal] [char](100) NULL,
+	[DescripcionIngles] [char](50) NULL,
+	[NumeroDigitos] [int] NULL,
+	[CentroCostos] [char](10) NULL,
+	[SituacionActivo] [char](2) NULL,
+	[FinanciadoFlag] [char](1) NULL,
+	[Visitable] [char](1) NULL,
+	[Estado] [char](1) NULL,
+	[UltimoUsuario] [char](20) NULL,
+	[UltimaFechaModif] [datetime] NULL,
+	[timestamp] [datetime] NULL,
+	[EmpleadoResponsable] [int] NULL,
+	[FlagEvento] [char](1) NULL,
+	[capacidad] [int] NULL,
+ CONSTRAINT [PK_fa_ubicaciones] PRIMARY KEY CLUSTERED 
+(
+	[Ubicacion] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+ALTER TABLE [dbo].[fa_ubicaciones] ADD  DEFAULT ('N') FOR [FlagEvento]
+GO
+
+

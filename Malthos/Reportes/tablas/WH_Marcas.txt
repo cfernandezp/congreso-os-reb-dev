@@ -1,0 +1,26 @@
+USE [testing5]
+GO
+
+/****** Object:  Table [dbo].[WH_Marcas]    Script Date: 1/14/2026 5:43:34 PM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE TABLE [dbo].[WH_Marcas](
+	[MarcaCodigo] [char](4) NOT NULL,
+	[DescripcionLocal] [char](30) NULL,
+	[DescripcionIngles] [char](30) NULL,
+	[Estado] [char](1) NULL,
+	[UltimoUsuario] [char](20) NULL,
+	[UltimaFechaModif] [datetime] NULL,
+	[Persona] [int] NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[MarcaCodigo] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+

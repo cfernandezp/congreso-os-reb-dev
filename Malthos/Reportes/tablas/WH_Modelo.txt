@@ -1,0 +1,35 @@
+USE [testing5]
+GO
+
+/****** Object:  Table [dbo].[WH_Modelo]    Script Date: 1/14/2026 5:44:28 PM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE TABLE [dbo].[WH_Modelo](
+	[Modelo] [char](20) NOT NULL,
+	[DescripcionLocal] [char](30) NULL,
+	[DescripcionIngles] [char](30) NULL,
+	[Linea] [char](6) NULL,
+	[MercadoLocalFlag] [char](1) NULL,
+	[AutoPrefijoChasis] [char](15) NULL,
+	[AutoPrefijoMotor] [char](15) NULL,
+	[Estado] [char](1) NULL,
+	[UltimoUsuario] [char](20) NULL,
+	[UltimaFechaModif] [datetime] NULL,
+	[NumeroChasis] [int] NULL,
+	[ProduccionFlag] [char](1) NULL,
+	[Tipo] [char](2) NULL,
+	[GrupoLinea] [varchar](3) NULL,
+	[Familia] [varchar](6) NULL,
+	[SubFamilia] [varchar](6) NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[Modelo] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+

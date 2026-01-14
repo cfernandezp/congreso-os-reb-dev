@@ -1,0 +1,68 @@
+USE [testing5]
+GO
+
+/****** Object:  Table [dbo].[AC_CostCenterMst]    Script Date: 1/14/2026 5:39:43 PM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE TABLE [dbo].[AC_CostCenterMst](
+	[CostCenter] [char](10) NOT NULL,
+	[LocalName] [char](120) NULL,
+	[EnglishName] [char](255) NULL,
+	[CostCenterClasification] [char](6) NULL,
+	[CostCenterGroup] [char](10) NULL,
+	[CostCenterSubGroup] [char](10) NULL,
+	[CostCenterRelation] [char](10) NULL,
+	[Responsible] [char](4) NULL,
+	[ExpenseFinanceFlag] [char](1) NULL,
+	[ExpenseAdministrativeFlag] [char](1) NULL,
+	[ExpenseSalesFlag] [char](1) NULL,
+	[ExpenseProductionFlag] [char](1) NULL,
+	[CostCenterNext] [char](10) NULL,
+	[Vendor] [int] NULL,
+	[AmountInvoices] [money] NULL,
+	[AmountRequisitions] [money] NULL,
+	[AmountAdvances] [money] NULL,
+	[AmountOthers01] [money] NULL,
+	[AmountOthers02] [money] NULL,
+	[AmountOthers03] [money] NULL,
+	[VendorSignFile] [char](20) NULL,
+	[Account] [char](20) NULL,
+	[Status] [char](1) NULL,
+	[LastUser] [char](20) NULL,
+	[Lastdate] [datetime] NULL,
+	[CostProductionLevel] [char](1) NULL,
+	[AccountDestination] [char](20) NULL,
+	[CostCenterType] [char](2) NULL,
+	[IncomeFlag] [char](1) NULL,
+	[AccountInflation] [char](20) NULL,
+	[ExpenseDirectFlag] [char](1) NULL,
+	[ExpenseFixedFlag] [char](1) NULL,
+	[Sucursal] [char](4) NULL,
+	[InternalNumber] [char](20) NULL,
+	[CostCenterOld] [varchar](25) NULL,
+	[RD_estado] [char](1) NULL,
+	[HR_VirtualFlag] [char](1) NULL,
+	[LocalNameLong] [varchar](750) NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[CostCenter] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+ALTER TABLE [dbo].[AC_CostCenterMst]  WITH CHECK ADD FOREIGN KEY([CostCenterClasification])
+REFERENCES [dbo].[AC_CostCenterClasification] ([CostCenterClasification])
+GO
+
+ALTER TABLE [dbo].[AC_CostCenterMst]  WITH CHECK ADD  CONSTRAINT [FK__AC_CostCenterMst__0E61098C] FOREIGN KEY([CostCenterGroup], [CostCenterSubGroup])
+REFERENCES [dbo].[AC_CostCenterSubGroup] ([CostCenterGroup], [CostCenterSubGroup])
+GO
+
+ALTER TABLE [dbo].[AC_CostCenterMst] CHECK CONSTRAINT [FK__AC_CostCenterMst__0E61098C]
+GO
+
+

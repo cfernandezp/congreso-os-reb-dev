@@ -1,0 +1,110 @@
+USE [testing5]
+GO
+
+/****** Object:  Table [dbo].[PersonaMast]    Script Date: 1/14/2026 5:41:54 PM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE TABLE [dbo].[PersonaMast](
+	[Persona] [int] NOT NULL,
+	[Origen] [char](4) NOT NULL,
+	[ApellidoPaterno] [varchar](40) NULL,
+	[ApellidoMaterno] [varchar](40) NULL,
+	[Nombres] [varchar](40) NULL,
+	[NombreCompleto] [char](65) NULL,
+	[Busqueda] [char](65) NULL,
+	[TipoDocumento] [char](1) NOT NULL,
+	[Documento] [char](20) NOT NULL,
+	[CodigoBarras] [char](18) NULL,
+	[EsCliente] [char](1) NULL,
+	[EsProveedor] [char](1) NULL,
+	[EsEmpleado] [char](1) NULL,
+	[EsOtro] [char](1) NULL,
+	[TipoPersona] [char](1) NULL,
+	[FechaNacimiento] [datetime] NULL,
+	[CiudadNacimiento] [char](20) NULL,
+	[Sexo] [char](1) NULL,
+	[Nacionalidad] [char](20) NULL,
+	[EstadoCivil] [char](1) NULL,
+	[NivelInstruccion] [char](3) NULL,
+	[Direccion] [varchar](200) NULL,
+	[CodigoPostal] [char](3) NULL,
+	[Provincia] [char](3) NULL,
+	[Departamento] [char](3) NULL,
+	[Telefono] [varchar](50) NULL,
+	[Fax] [varchar](15) NULL,
+	[DocumentoFiscal] [char](20) NULL,
+	[DocumentoIdentidad] [char](20) NULL,
+	[CarnetExtranjeria] [char](10) NULL,
+	[DocumentoMilitarFA] [char](15) NULL,
+	[TipoBrevete] [char](1) NULL,
+	[Brevete] [char](18) NULL,
+	[Pasaporte] [char](18) NULL,
+	[NombreEmergencia] [varchar](50) NULL,
+	[DireccionEmergencia] [varchar](60) NULL,
+	[TelefonoEmergencia] [varchar](15) NULL,
+	[BancoMonedaLocal] [char](3) NULL,
+	[TipoCuentaLocal] [char](3) NULL,
+	[CuentaMonedaLocal] [char](20) NULL,
+	[BancoMonedaExtranjera] [char](3) NULL,
+	[TipoCuentaExtranjera] [char](3) NULL,
+	[CuentaMonedaExtranjera] [char](20) NULL,
+	[PersonaAnt] [char](15) NULL,
+	[CorreoElectronico] [varchar](50) NULL,
+	[ClasePersonaCodigo] [char](3) NULL,
+	[EnfermedadGraveFlag] [char](1) NULL,
+	[Estado] [char](1) NULL,
+	[UltimoUsuario] [char](20) NULL,
+	[UltimaFechaModif] [datetime] NULL,
+	[TipoPersonaUsuario] [char](3) NULL,
+	[IngresoFechaRegistro] [datetime] NULL,
+	[IngresoAplicacionCodigo] [char](2) NULL,
+	[IngresoUsuario] [char](20) NULL,
+	[PYMEFlag] [char](1) NULL,
+	[GrupoEmpresarial] [char](4) NULL,
+	[PersonaClasificacion] [char](8) NULL,
+	[TarjetadeCredito] [char](20) NULL,
+	[FlagActualizacion] [char](1) NULL,
+	[Celular] [char](15) NULL,
+	[ParentescoEmergencia] [char](10) NULL,
+	[CelularEmergencia] [char](15) NULL,
+	[LugarNacimiento] [char](80) NULL,
+	[CUENTAMONEDALOCAL_TMP] [varchar](15) NULL,
+	[CUENTAMONEDAEXTRANJERA_TMP] [varchar](15) NULL,
+	[RUC] [varchar](11) NULL,
+	[SUNATNacionalidad] [char](6) NULL,
+	[SUNATVia] [char](2) NULL,
+	[SUNATZona] [char](2) NULL,
+	[SUNATUbigeo] [char](10) NULL,
+	[SUNATDomiciliado] [char](1) NULL,
+	[Celular1] [char](30) NULL,
+	[CodigoCiudadTelefono] [char](10) NULL,
+	[PaisEmisorDocumento] [char](4) NULL,
+	[departamento_old] [char](2) NULL,
+	[provincia_old] [char](2) NULL,
+	[codigopostal_old] [char](2) NULL,
+	[CiudadNacimiento_old] [char](3) NULL,
+	[UsuarioCreacion] [varchar](30) NULL,
+	[FechaCreacion] [datetime] NULL,
+	[CCIMonedaLocal] [varchar](20) NULL,
+ CONSTRAINT [PK__PersonaMast__68C86C1B] PRIMARY KEY CLUSTERED 
+(
+	[Persona] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, FILLFACTOR = 95, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+ALTER TABLE [dbo].[PersonaMast]  WITH CHECK ADD FOREIGN KEY([GrupoEmpresarial])
+REFERENCES [dbo].[MA_PersonaGrupoEmpresarial] ([GrupoEmpresarial])
+GO
+
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'T-Registro: Codigo telefonico de la ciudad' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'PersonaMast', @level2type=N'COLUMN',@level2name=N'CodigoCiudadTelefono'
+GO
+
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'T-Registro: Pais emisor del documento' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'PersonaMast', @level2type=N'COLUMN',@level2name=N'PaisEmisorDocumento'
+GO
+
+

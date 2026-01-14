@@ -1,0 +1,328 @@
+forward
+global type w_fa_rep_076_activos_asignados from w_windowbase
+end type
+type cb_centrocosto from u_cb within w_fa_rep_076_activos_asignados
+end type
+type cb_search from u_cb within w_fa_rep_076_activos_asignados
+end type
+type dw_reporte from datawindow within w_fa_rep_076_activos_asignados
+end type
+type cb_codigomecanico from u_cb within w_fa_rep_076_activos_asignados
+end type
+type cb_empleado from u_cb within w_fa_rep_076_activos_asignados
+end type
+type dw_list from datawindow within w_fa_rep_076_activos_asignados
+end type
+type dw_position from datawindow within w_fa_rep_076_activos_asignados
+end type
+end forward
+
+shared variables
+ 
+end variables
+
+global type w_fa_rep_076_activos_asignados from w_windowbase
+integer x = 9
+integer y = 360
+integer width = 2866
+integer height = 1504
+string title = "076 - Activos Asignados a Usuarios"
+boolean controlmenu = true
+boolean minbox = true
+windowtype windowtype = popup!
+cb_centrocosto cb_centrocosto
+cb_search cb_search
+dw_reporte dw_reporte
+cb_codigomecanico cb_codigomecanico
+cb_empleado cb_empleado
+dw_list dw_list
+dw_position dw_position
+end type
+global w_fa_rep_076_activos_asignados w_fa_rep_076_activos_asignados
+
+type variables
+long iv_line
+string iv_original_sql, iv_report_Sql, iv_naturaleza
+w_propiedades_datawindow iw_propiedades_datawindow
+string iv_vendor_type,iv_detail_original, iv_dni
+end variables
+
+forward prototypes
+public subroutine wf_prepare_sql ()
+public subroutine wf_print ()
+public function integer wf_open ()
+end prototypes
+
+public subroutine wf_prepare_sql ();string w_where,w_sql,w_estado, w_dni_f
+string w_companiasocio,w_naturaleza, w_centrocosto, w_condicion
+Long w_persona
+long w_long, w_assetdigit
+
+
+dw_position.accepttext()
+w_persona	 = dw_position.getitemnumber(1,"Persona")
+w_dni_f	 = dw_position.getitemstring(1,"dni_f")
+w_naturaleza = dw_position.getitemstring(1,"Naturaleza")
+w_estado		 = dw_position.getitemstring(1,"Estado")
+w_centrocosto= dw_position.getitemstring(1,"CentroCosto")
+w_condicion = dw_position.getitemstring(1,"Situacion")
+w_where=iv_original_sql
+
+
+
+if not isnull(w_persona) then
+	if w_dni_f='S' then
+		w_where = w_where + ' AND (PersonaMast.Documento = :documento)' 	 
+	else
+		w_where = w_where + ' AND (FA_Activo.EmpleadoaCargo = :persona)' 	 
+	end if
+end if
+
+if not isnull(w_naturaleza) then
+	w_where = w_where + ' AND (FA_Activo.Manejo = :naturaleza)' 	 
+end if
+
+if not isnull(w_estado) then
+	w_where = w_where + ' AND (FA_Activo.Estado = :estado)' 	 
+end if
+
+if not isnull(w_centrocosto) then
+	w_where = w_where + ' AND (FA_Activo.CentroCostos = :centrocosto ) '
+end if
+if not isnull(w_condicion) then
+	w_where = W_where + " AND ( FA_Activo.inventariofisicoflag = '" + w_Condicion + "')"
+end if
+
+
+string ret_code
+w_where = f_add_nolock_to_sql(w_where)
+w_SQL = 'DataWindow.Table.Select="' + w_where + '"'
+ret_code = dw_list.modify(w_SQL)
+//messagebox(ret_code,w_sql) 
+dw_list.retrieve(w_persona,w_naturaleza,w_estado, w_centrocosto, iv_dni)
+				 
+ 
+end subroutine
+
+public subroutine wf_print ();dw_list. print()
+ 
+end subroutine
+
+public function integer wf_open ();long   w_null_number
+String w_tipo_equipo
+
+setnull(w_null_number)
+
+dw_position.settransobject(SQLCA) // Header
+dw_list.settransobject(SQLCA) // Header
+
+dw_position.insertrow(0)
+dw_position.setfocus()
+dw_position.setitem(1,"Persona_all",	"S")
+dw_position.setitem(1,"Persona",			w_null_number)
+dw_position.setitem(1,"Dni_f",	"S")
+dw_position.setitem(1,"Naturaleza_all","S")
+dw_position.setitem(1,"Naturaleza",		str_global.gv_null_string)
+dw_position.setitem(1,"Estado_all","S")
+dw_position.setitem(1,"CentroCosto_all","S")
+dw_position.setitem(1,"Situacion_all","S")
+dw_position.setitem(1,"Estado",		   str_global.gv_null_string)
+dw_position.setitem(1,"SumarizadoFlag","N")
+
+iv_original_sql 	 = dw_list.Describe("Datawindow.Table.Select")
+iv_detail_original = dw_list.describe( "Datawindow.Detail.Height")
+
+dw_list.modify("DataWindow.Print.preview = yes")
+m_main.mf_menu_change("m_print","enabled") 		
+f_change_voucher_titles(dw_position)
+f_change_voucher_titles(dw_list)
+//	Registrar Objetos Resize
+io_resize.uf_Register(dw_list, 7)
+
+return 0
+end function
+
+event objectstartevent;call super::objectstartevent;str_pass w_str_pass
+choose case eventname 
+case "opened"
+	wf_open()
+	
+case 'persona_selected'
+	if not isnull(str_global.gv_number_selected) then
+		if iv_vendor_type = "E" then		
+			dw_position.setitem(1,"Persona",			str_global.gv_number_selected)
+			iv_dni=str_global.gv_documento_selected
+		end if
+	end if	
+	close(w_ma_persona_select)
+	
+case "cb_empleado_clicked"
+	w_str_pass.po[1] = this
+	w_str_pass.s[1]= "E"
+	iv_vendor_type = "E"
+	setnull(str_global.gv_number_selected)
+	if not isvalid(w_ma_persona_select) then
+		openwithparm(w_ma_persona_select, w_str_pass)
+	end if 
+	w_ma_persona_select.visible = true
+	w_ma_persona_select.enabled = true
+	setfocus(w_ma_persona_select)
+	
+case "cb_search_clicked"
+	wf_prepare_sql()
+case "cb_centrocosto_clicked"
+	s_account_flow ws_account_flow
+	ws_account_flow.companyowner = str_global.gv_companyowner
+	ws_account_flow.prime = ""
+	ws_account_flow.businessunit = str_global.gv_null_string
+	ws_account_flow.CodigoCompletoFlag = "Y"
+	setnull(ws_account_flow.value)
+	w_str_pass.po[1] = ws_account_flow
+	openwithparm(w_ma_ac_costcenter_select_onecode, w_str_pass)		
+	if not isnull(str_global.gv_value_selected) then
+		dw_position.setitem(1,"CentroCosto_all","N")
+		dw_position.setitem(1,"CentroCosto",		str_global.gv_value_selected)
+	end if	
+CASE  "closed"
+	m_main.mf_menu_change("m_print","disabled") 			
+	
+end choose
+end event
+
+on w_fa_rep_076_activos_asignados.create
+int iCurrent
+call super::create
+this.cb_centrocosto=create cb_centrocosto
+this.cb_search=create cb_search
+this.dw_reporte=create dw_reporte
+this.cb_codigomecanico=create cb_codigomecanico
+this.cb_empleado=create cb_empleado
+this.dw_list=create dw_list
+this.dw_position=create dw_position
+iCurrent=UpperBound(this.Control)
+this.Control[iCurrent+1]=this.cb_centrocosto
+this.Control[iCurrent+2]=this.cb_search
+this.Control[iCurrent+3]=this.dw_reporte
+this.Control[iCurrent+4]=this.cb_codigomecanico
+this.Control[iCurrent+5]=this.cb_empleado
+this.Control[iCurrent+6]=this.dw_list
+this.Control[iCurrent+7]=this.dw_position
+end on
+
+on w_fa_rep_076_activos_asignados.destroy
+call super::destroy
+destroy(this.cb_centrocosto)
+destroy(this.cb_search)
+destroy(this.dw_reporte)
+destroy(this.cb_codigomecanico)
+destroy(this.cb_empleado)
+destroy(this.dw_list)
+destroy(this.dw_position)
+end on
+
+type cb_centrocosto from u_cb within w_fa_rep_076_activos_asignados
+integer x = 1659
+integer y = 84
+integer width = 73
+integer height = 64
+integer weight = 400
+string text = "..."
+end type
+
+type cb_search from u_cb within w_fa_rep_076_activos_asignados
+integer x = 2551
+integer y = 36
+integer width = 283
+integer height = 84
+integer taborder = 40
+integer weight = 400
+string text = "Buscar"
+boolean default = true
+end type
+
+type dw_reporte from datawindow within w_fa_rep_076_activos_asignados
+boolean visible = false
+integer x = 937
+integer y = 472
+integer width = 2245
+integer height = 848
+integer taborder = 50
+boolean titlebar = true
+string title = "reporte"
+string dataobject = "dw_fa_asset_report"
+boolean livescroll = true
+end type
+
+type cb_codigomecanico from u_cb within w_fa_rep_076_activos_asignados
+boolean visible = false
+integer x = 2834
+integer y = 316
+integer width = 41
+integer height = 72
+integer taborder = 30
+integer weight = 400
+string text = "..."
+end type
+
+type cb_empleado from u_cb within w_fa_rep_076_activos_asignados
+integer x = 1659
+integer y = 12
+integer width = 73
+integer height = 64
+integer weight = 400
+string text = "..."
+end type
+
+type dw_list from datawindow within w_fa_rep_076_activos_asignados
+integer x = 23
+integer y = 252
+integer width = 2816
+integer height = 1148
+integer taborder = 60
+boolean bringtotop = true
+string dataobject = "dw_fa_rep_076_activos_asignados"
+boolean hscrollbar = true
+boolean vscrollbar = true
+boolean hsplitscroll = true
+boolean livescroll = true
+borderstyle borderstyle = stylelowered!
+end type
+
+type dw_position from datawindow within w_fa_rep_076_activos_asignados
+integer x = 18
+integer y = 12
+integer width = 2496
+integer height = 212
+integer taborder = 10
+string dataobject = "dw_fa_rep_076_empleadoacargo_position"
+boolean border = false
+boolean livescroll = true
+end type
+
+event itemchanged;dw_position.accepttext()
+
+choose case dwo.name  //this.getcolumnname()
+case "persona_all"
+	long w_null
+	setnull (w_null)
+	this.setitem(1,"Persona",	w_null)
+case "naturaleza_all"
+	this.setitem(1,"Naturaleza",str_global.gv_null_string)
+case "estado_all"
+	this.setitem(1,"Estado",str_global.gv_null_string)	
+case "situacion_all"
+	this.setitem(1,"situacion",str_global.gv_null_string)	
+	
+case "centrocosto_all"
+	this.setitem(1,"centrocosto",str_global.gv_null_string)	
+	
+case "sumarizadoflag"
+	if data= "S" then	//Sumarizado
+		dw_list.Modify ("Datawindow.Detail.Height = 0")		
+	else	
+		dw_list.Modify ("Datawindow.Detail.Height =" + iv_detail_original )
+	end if 	
+end choose
+ 
+end event
+

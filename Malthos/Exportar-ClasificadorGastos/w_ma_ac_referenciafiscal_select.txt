@@ -1,0 +1,970 @@
+forward
+global type w_ma_ac_referenciafiscal_select from w_windowbase
+end type
+type cb_1 from commandbutton within w_ma_ac_referenciafiscal_select
+end type
+type t from tab within w_ma_ac_referenciafiscal_select
+end type
+type p1 from userobject within t
+end type
+type dw_01 from datawindow within p1
+end type
+type tv_01 from treeview within p1
+end type
+type p1 from userobject within t
+dw_01 dw_01
+tv_01 tv_01
+end type
+type p2 from userobject within t
+end type
+type tv_02 from treeview within p2
+end type
+type dw_02 from datawindow within p2
+end type
+type dw_02_detail from datawindow within p2
+end type
+type p2 from userobject within t
+tv_02 tv_02
+dw_02 dw_02
+dw_02_detail dw_02_detail
+end type
+type p3 from userobject within t
+end type
+type tv_03 from treeview within p3
+end type
+type dw_03 from datawindow within p3
+end type
+type p3 from userobject within t
+tv_03 tv_03
+dw_03 dw_03
+end type
+type t from tab within w_ma_ac_referenciafiscal_select
+p1 p1
+p2 p2
+p3 p3
+end type
+type dw_1 from datawindow within w_ma_ac_referenciafiscal_select
+end type
+type dw_nivel from datawindow within w_ma_ac_referenciafiscal_select
+end type
+type dw_data from datawindow within w_ma_ac_referenciafiscal_select
+end type
+type cb_ok from u_cb within w_ma_ac_referenciafiscal_select
+end type
+type cb_cancel from u_cb within w_ma_ac_referenciafiscal_select
+end type
+end forward
+
+global type w_ma_ac_referenciafiscal_select from w_windowbase
+integer x = 110
+integer y = 96
+integer width = 3872
+integer height = 2192
+string title = "Selección de Clasificaciones"
+boolean controlmenu = true
+windowtype windowtype = response!
+event ue_tab_selected pbm_custom51
+cb_1 cb_1
+t t
+dw_1 dw_1
+dw_nivel dw_nivel
+dw_data dw_data
+cb_ok cb_ok
+cb_cancel cb_cancel
+end type
+global w_ma_ac_referenciafiscal_select w_ma_ac_referenciafiscal_select
+
+type variables
+Long  iv_levelnumber01, iv_levelnumber02, iv_levelnumber03
+datawindow iv_dw, dw_01, dw_02, dw_03, dw_02_detail
+string iv_tiporeferencia, iv_action, iv_year, iv_Item
+string iv_referenciafiscal01, iv_referenciafiscal02, iv_referenciafiscal03
+
+
+
+end variables
+
+forward prototypes
+public function integer wf_fill_tree (string par_tiporeferencia)
+public function integer wf_open ()
+public function integer wf_fill_description (string par_tiporeferencia)
+public function integer wf_sql_find_meta (string par_action)
+end prototypes
+
+event ue_tab_selected;choose case iv_tiporeferencia
+case "01"
+	t.selectedtab = 1
+case "02"
+	t.selectedtab = 2
+case "03"
+	t.selectedtab = 3
+case else
+	t.selectedtab = 2
+end choose
+end event
+
+public function integer wf_fill_tree (string par_tiporeferencia);long		w_rows, w1, m, w_currentlevel, k, w_levelnumber
+long		w_digitos [], w_nivel [],  tvi_hdl = 0
+string	w_work, w_year	
+dw_1.accepttext()
+dw_nivel.settransobject(SQLCA)
+dw_data.settransobject(SQLCA)
+w_levelnumber = 0
+treeview w_tv
+
+choose case par_tiporeferencia
+case "01"
+	DO UNTIL t.p1.tv_01.FindItem(RootTreeItem!, 0) = -1	
+		t.p1.tv_01.DeleteItem(tvi_hdl)
+	LOOP
+case "02"
+	DO UNTIL t.p2.tv_02.FindItem(RootTreeItem!, 0) = -1	
+		t.p2.tv_02.DeleteItem(tvi_hdl)
+	LOOP
+case "03"
+	DO UNTIL t.p3.tv_03.FindItem(RootTreeItem!, 0) = -1	
+		t.p3.tv_03.DeleteItem(tvi_hdl)
+	LOOP
+end choose
+
+//w_rows = dw_nivel.retrieve(par_tiporeferencia)
+//--------> P.YOVERA.Y - 17/06/2008
+w_year  = dw_1.getitemstring(1,"Ano")
+w_rows = dw_nivel.retrieve(par_tiporeferencia, w_year)
+// se aumento un parametro en el dw_nivel : dw_ma_ac_referenciafiscal_select_nivel
+for k = 1 to w_rows
+	if dw_nivel.getitemstring(k,"Nivel") = "00" then
+		CONTINUE
+	end if 
+	w_work = dw_nivel.getitemstring(k,"ReferenciaFiscal")
+	if isnumber(w_work) then
+		w_levelnumber ++
+		w_digitos [w_levelnumber] = integer(w_work)
+	else
+		CONTINUE
+	end if 
+next
+
+choose case par_tiporeferencia
+case "01"
+	iv_levelnumber01 = w_levelnumber
+	w_tv	= t.p1.tv_01
+case "02"
+	iv_levelnumber02 = w_levelnumber
+	w_tv	= t.p2.tv_02
+case "03"
+	iv_levelnumber03 = w_levelnumber
+	w_tv	= t.p3.tv_03
+end choose
+
+w_rows = dw_data.retrieve(dw_1.getitemstring(1,"Ano"),par_tiporeferencia)
+For w1 = 1 To w_rows
+	//Find Length
+	w_currentlevel = 0
+	for m = 1 to w_levelnumber
+		if len(dw_data.getitemstring(w1,"ReferenciaFiscal")) = w_digitos [m] then
+			w_currentlevel = m
+		end if 
+	next
+	if w_currentlevel = 0 then
+		CONTINUE
+	end if 
+	//Insert Tree
+	treeviewitem   lv_new	
+	
+
+	
+	lv_new.Data  		= dw_data.getitemstring(w1,"ReferenciaFiscal")
+	lv_new.Label 		= dw_data.getitemstring(w1,"DescripcionLocal")
+	lv_new.Label 		= lv_new.data + " " + lv_new.Label
+	lv_new.level 		= w_currentlevel
+	lv_new.Children 	= true	//??
+	lv_new.PictureIndex = w_currentlevel
+	lv_new.SelectedPictureIndex = w_currentlevel
+	
+	if w_currentlevel = 1 then
+		w_nivel [w_currentlevel]	= w_tv.InsertItemLast(0,lv_new)
+	else
+		w_nivel [w_currentlevel]	= w_tv.InsertItemLast(w_nivel [w_currentlevel - 1] ,lv_new)
+	end if
+	If w_nivel [w_currentlevel] < 1 then
+		MessageBox("Error-Insert-"+par_tiporeferencia,"Data = " + lv_new.Label, Exclamation!)
+		return -1
+	End If
+next
+return  0
+
+end function
+
+public function integer wf_open ();dw_01	= t.p1.dw_01
+dw_02	= t.p2.dw_02
+dw_03	= t.p3.dw_03
+dw_02_detail	= t.p2.dw_02_detail
+
+iv_action 			= str_pass.s[1]
+iv_tiporeferencia	= str_pass.s[2]
+if Upperbound(str_pass.s) > 2 then
+	iv_year			= str_pass.s[3]
+end if
+
+SetNull(iv_item)
+if Upperbound(str_pass.s) > 3 then
+	iv_item			= str_pass.s[4]
+end if 
+if isnull(iv_year) or len(trim(iv_year)) = 0 then
+	iv_year			= left(str_global.gv_period_voucher,4)
+end if
+
+iv_dw					= str_pass.po[1]
+dw_01.settransobject(SQLCA)
+dw_02_detail.settransobject(SQLCA)
+
+if iv_action = "Browse" then
+	dw_1.enabled = false
+	dw_01.enabled = false
+	t.p1.tv_01.visible 	= false
+	t.p2.tv_02.visible	= false
+	t.p3.tv_03.visible	= false
+	cb_ok.visible = false
+end if 
+dw_02.enabled = false
+f_protect_datawindow(dw_02_detail)
+dw_03.enabled = false
+long w_row
+w_row = iv_dw.getrow()
+if w_row = 0 then
+	messagebox("Error","La Línea Original no ha sido especificada")
+	return -1
+end if 
+
+datawindowchild dwc_nivel99
+dw_01.getchild('ReferenciaFiscal_99_d',	dwc_nivel99)
+dwc_nivel99.SetTransObject(SQLCA)
+dwc_nivel99.insertrow(0)
+dw_01.insertrow(0)
+dw_02.insertrow(0)
+dw_03.insertrow(0)
+choose case iv_tiporeferencia
+case "01"
+	t.p2.enabled = false
+	t.p3.enabled = false
+	t.p3.enabled = false
+	dw_01.setitem(1,"ReferenciaFiscal_99_c",	iv_dw.getitemstring(w_row,"ReferenciaFiscal01"))
+	dw_01.setitem(1,"ReferenciaFiscal_99_d",	iv_dw.getitemstring(w_row,"ReferenciaFiscal01"))
+	postevent("ue_tab_selected")
+case "02"
+	t.p1.enabled = false
+	t.p3.enabled = false
+	dw_02.setitem(1,"ReferenciaFiscal",			iv_dw.getitemstring(w_row,"ReferenciaFiscal02"))
+	postevent("ue_tab_selected")
+case "03"
+	t.p1.enabled = false
+	t.p2.enabled = false
+	dw_03.setitem(1,"ReferenciaFiscal",			iv_dw.getitemstring(w_row,"ReferenciaFiscal03"))
+	postevent("ue_tab_selected")
+case "ALL"
+	dw_01.setitem(1,"ReferenciaFiscal_99_c",	iv_dw.getitemstring(w_row,"ReferenciaFiscal01"))
+	dw_01.setitem(1,"ReferenciaFiscal_99_d",	iv_dw.getitemstring(w_row,"ReferenciaFiscal01"))
+	dw_02.setitem(1,"ReferenciaFiscal",			iv_dw.getitemstring(w_row,"ReferenciaFiscal02"))
+	dw_03.setitem(1,"ReferenciaFiscal",			iv_dw.getitemstring(w_row,"ReferenciaFiscal03"))
+	postevent("ue_tab_selected")
+end choose
+
+if isnull(dw_03.getitemstring(1,"ReferenciaFiscal")) or &
+	len(trim(dw_03.getitemstring(1,"ReferenciaFiscal"))) = 0 then
+	dw_03.setitem(1,"ReferenciaFiscal",	f_sql_read_parametrosmast_$("AC","999999","FISCAL03DF"))
+end if 
+
+dw_1.insertrow(0)
+dw_1.setitem(1,"Ano",	iv_year)
+dw_1.setitem(1,"DistribuirFlag",	"S")
+if iv_tiporeferencia <> "ALL" then
+	dw_1.setitem(1,"DistribuirFlag",	"N")
+	dw_1.modify("DistribuirFlag.protect=1")	
+end if 
+
+dwc_nivel99.retrieve(iv_year,"01")
+
+if iv_action <> "Browse" then
+	choose case iv_tiporeferencia
+	case "01"
+		wf_fill_tree("01")
+		wf_sql_find_meta("ReferenciaRelacionada")
+	case "02"
+		wf_fill_tree("02")	
+	case "03"
+		wf_fill_tree("03")	
+	case else
+		wf_fill_tree("01")
+		wf_fill_tree("02")
+		wf_fill_tree("03")
+		wf_sql_find_meta("ReferenciaRelacionada")
+	end choose
+else
+	wf_sql_find_meta("ReferenciaRelacionada")	
+end if 
+choose case iv_tiporeferencia
+case "01"
+	wf_fill_description("01")
+case "02"
+	wf_fill_description("02")
+case "03"
+	wf_fill_description("03")
+case else	
+	wf_fill_description("01")
+	wf_fill_description("02")
+	wf_fill_description("03")
+end choose
+
+dw_02.modify("ReferenciaFiscal_99_t.visible=0")
+dw_02.modify("ReferenciaFiscal_99_c.visible=0")
+dw_02.modify("ReferenciaFiscal_99_d.visible=0")
+dw_03.modify("ReferenciaFiscal_99_t.visible=0")
+dw_03.modify("ReferenciaFiscal_99_c.visible=0")
+dw_03.modify("ReferenciaFiscal_99_d.visible=0")
+
+if iv_action = "UpdateClose" then
+	triggerobjectstartevent("cb_ok_clicked")
+	return 0
+end if 
+
+return 0
+
+end function
+
+public function integer wf_fill_description (string par_tiporeferencia);long		w_rows, k, w_length, m, w_levelnumber
+string	w_work, w_year,w_nivel, w_referencia, w_descripcion, w_referencia_key
+datawindow	w_dw
+dw_1.accepttext()
+dw_nivel.settransobject(SQLCA)
+dw_data.settransobject(SQLCA)
+
+choose case par_tiporeferencia
+case "01"
+	w_dw = dw_01
+case "02"
+	w_dw = dw_02
+case "03"
+	w_dw = dw_03
+end choose
+
+w_referencia 	= w_dw.getitemstring(1,"ReferenciaFiscal")
+w_year			= dw_1.getitemstring(1,"Ano")
+//w_rows = dw_nivel.retrieve(par_tiporeferencia) - Se aumento un parametro mas para extraer el padre segun el periodo
+// --------> P.YOVERA.Y - 17/06/2008
+w_rows = dw_nivel.retrieve(par_tiporeferencia, w_year)
+// <------------
+for k = 1 to w_rows
+	w_nivel = dw_nivel.getitemstring(k,"Nivel") 
+	if w_nivel = "00" then
+		w_levelnumber = integer(dw_nivel.getitemstring(k,"ReferenciaFiscal"))
+	else
+		if k - 1 > w_levelnumber then
+			for m = k - 1 to 7
+				w_dw.modify("ReferenciaFiscal_" + string(m,"00") + "_t.visible=0")
+				w_dw.modify("ReferenciaFiscal_" + string(m,"00") + "_c.visible=0")
+				w_dw.modify("ReferenciaFiscal_" + string(m,"00") + "_d.visible=0")
+				w_dw.modify("ReferenciaFiscal_" + string(m,"00") + "_c.border=0")
+				w_dw.modify("ReferenciaFiscal_" + string(m,"00") + "_d.border=0")
+			next		
+			CONTINUE
+		end if 
+		w_length 			= integer(dw_nivel.getitemstring(k,"ReferenciaFiscal"))
+		w_referencia_key	= left(w_referencia,w_length)
+	  SELECT AC_ReferenciaFiscal.DescripcionLocal  
+		 INTO :w_descripcion  
+		 FROM AC_ReferenciaFiscal  
+		WHERE ( AC_ReferenciaFiscal.Ano 		= :w_year ) AND  
+				( AC_ReferenciaFiscal.TipoReferenciaFiscal = :par_tiporeferencia ) AND  
+				( AC_ReferenciaFiscal.Nivel 	= :w_nivel ) AND  
+				( AC_ReferenciaFiscal.ReferenciaFiscal = :w_referencia_key )   ;
+		
+		w_dw.modify("ReferenciaFiscal_" + w_nivel + "_t.text='" + dw_nivel.getitemstring(k,"DescripcionLocal") + "'")
+		w_dw.setitem(1,"ReferenciaFiscal_" + w_nivel + "_c",	w_referencia_key)
+		w_dw.setitem(1,"ReferenciaFiscal_" + w_nivel + "_d",	w_descripcion)
+	end if 
+next
+
+return  0
+
+end function
+
+public function integer wf_sql_find_meta (string par_action);string w_ano, w_meta, w_referenciarelacionada
+w_ano							= dw_1.getitemstring(1,"Ano")
+
+if par_action = "Meta" then
+	w_referenciarelacionada	= dw_01.getitemstring(1,"ReferenciaFiscal")
+  SELECT max(AC_ReferenciaFiscal.ReferenciaFiscal)  
+    INTO :w_meta  
+    FROM AC_ReferenciaFiscal  
+   WHERE ( AC_ReferenciaFiscal.Ano = :w_ano ) AND  
+         ( AC_ReferenciaFiscal.TipoReferenciaFiscal = "01" ) AND  
+         ( AC_ReferenciaFiscal.Nivel = "99" ) AND  
+         ( AC_ReferenciaFiscal.ReferenciaFiscalRelacionada = :w_referenciarelacionada )   ;
+	dw_01.setitem(1,"ReferenciaFiscal_99_c",	w_meta)
+	dw_01.setitem(1,"ReferenciaFiscal_99_d",	w_meta)
+else
+	w_meta	= dw_01.getitemstring(1,"ReferenciaFiscal_99_c")
+  SELECT AC_ReferenciaFiscal.ReferenciaFiscalRelacionada  
+    INTO :w_referenciarelacionada
+    FROM AC_ReferenciaFiscal  
+   WHERE ( AC_ReferenciaFiscal.Ano = :w_ano ) AND  
+         ( AC_ReferenciaFiscal.TipoReferenciaFiscal = "01" ) AND  
+         ( AC_ReferenciaFiscal.Nivel = "99" ) AND  
+         ( AC_ReferenciaFiscal.ReferenciaFiscal = :w_meta)   ;
+	dw_01.setitem(1,"ReferenciaFiscal",	w_referenciarelacionada)
+end if 
+return 0
+	
+end function
+
+on w_ma_ac_referenciafiscal_select.create
+int iCurrent
+call super::create
+this.cb_1=create cb_1
+this.t=create t
+this.dw_1=create dw_1
+this.dw_nivel=create dw_nivel
+this.dw_data=create dw_data
+this.cb_ok=create cb_ok
+this.cb_cancel=create cb_cancel
+iCurrent=UpperBound(this.Control)
+this.Control[iCurrent+1]=this.cb_1
+this.Control[iCurrent+2]=this.t
+this.Control[iCurrent+3]=this.dw_1
+this.Control[iCurrent+4]=this.dw_nivel
+this.Control[iCurrent+5]=this.dw_data
+this.Control[iCurrent+6]=this.cb_ok
+this.Control[iCurrent+7]=this.cb_cancel
+end on
+
+on w_ma_ac_referenciafiscal_select.destroy
+call super::destroy
+destroy(this.cb_1)
+destroy(this.t)
+destroy(this.dw_1)
+destroy(this.dw_nivel)
+destroy(this.dw_data)
+destroy(this.cb_ok)
+destroy(this.cb_cancel)
+end on
+
+event objectstartevent;call super::objectstartevent;str_pass w_str_pass		
+
+choose case eventname
+case "opened"
+	wf_open()
+	
+case "cb_cancel_clicked"
+	setnull(str_global.gv_value_selected)
+	close(this)
+	
+case "cb_ok_clicked"
+	long w_line
+	string w_year, w_field, w_cuenta1, w_cuenta2
+	long	w_rows, w_last, k 
+	decimal w_amount
+	w_line = iv_dw.getrow()
+	w_year = dw_1.getitemstring(1,"Ano")	
+	if w_line <> 0 then
+		choose case iv_tiporeferencia
+		case "01"
+			iv_dw.setitem(w_line,"ReferenciaFiscal01",	dw_01.getitemstring(1,"ReferenciaFiscal_99_c"))
+		case "02"
+			iv_dw.setitem(w_line,"ReferenciaFiscal02",	dw_02.getitemstring(1,"ReferenciaFiscal"))
+		case "03"
+			iv_dw.setitem(w_line,"ReferenciaFiscal03",	dw_03.getitemstring(1,"ReferenciaFiscal"))
+		case "ALL"
+			iv_dw.setitem(w_line,"ReferenciaFiscal01",	dw_01.getitemstring(1,"ReferenciaFiscal_99_c"))
+			iv_dw.setitem(w_line,"ReferenciaFiscal02",	dw_02.getitemstring(1,"ReferenciaFiscal"))
+			iv_dw.setitem(w_line,"ReferenciaFiscal03",	dw_03.getitemstring(1,"ReferenciaFiscal"))
+		end choose
+		If Not IsNull(iv_item) Then
+		  SELECT WH_ItemMast.CuentaInventario,   
+		         WH_ItemMast.CuentaInversion  
+		    INTO :w_cuenta1,   
+      		   :w_cuenta2  
+		    FROM WH_ItemMast  
+		   WHERE WH_ItemMast.Item = :iv_Item   ;
+			
+			if iv_dw.modify("Account.Visible=1") = ""	then
+				If Left(iv_dw.getitemstring(w_line,"ReferenciaFiscal02"),2) = "67" Then				
+					iv_dw.SetItem(w_line,"Account",w_cuenta2)
+				Else
+					iv_dw.SetItem(w_line,"Account",w_cuenta1)
+				End If
+			End If
+		End If
+		if dw_1.getitemstring(1,"DistribuirFlag") = "S" and (iv_tiporeferencia = "02" or iv_tiporeferencia = "ALL") then
+			datawindowchild dwc_meta
+			dw_02_detail.getchild('MetaPresupuestal',	dwc_meta)
+			dwc_meta.SetTransObject(SQLCA)
+			dwc_meta.retrieve(dw_1.getitemstring(1,"Ano"),"01")
+			w_rows = dw_02_detail.retrieve(dw_1.getitemstring(1,"Ano"),	"02", string(iv_levelnumber02,"00"), dw_02.getitemstring(1,"ReferenciaFiscal"))
+			w_field = ""
+			if iv_dw.modify("Monto.Visible=1") = ""	then	
+				w_field 	= "Monto"
+				w_amount = iv_dw.getitemdecimal(w_line,"Monto")
+			end if 
+			if iv_dw.modify("LocalAmount.Visible=1") = ""	then	
+				w_field = "LocalAmount"
+				w_amount = iv_dw.getitemdecimal(w_line,"LocalAmount")
+			end if 
+			if iv_dw.modify("Monto12.Visible=1") = ""	then	
+				w_field = "Monto12"
+				w_amount = iv_dw.getitemdecimal(w_line,"Monto12")
+			end if 
+			if iv_dw.modify("Presupuesto12.Visible=1") = ""	then	
+				w_field = "Presupuesto12"
+				w_amount = iv_dw.getitemdecimal(w_line,"Presupuesto12")
+			end if 
+			long m
+			if w_field <> "" then
+				for k = 1 to w_rows
+					if k = 1 then
+						w_last = w_line
+					else
+//						MessageBox("1."+String(k)+"/"+string(w_rows),w_line)
+						w_last = iv_dw.RowCount()
+						iv_dw.RowsCopy(w_line, w_line, Primary!, iv_dw, w_last , Primary!)
+//						MessageBox("2."+String(k)+"/"+string(w_rows),w_last)
+						w_last = iv_dw.rowcount()						
+					end if 
+					iv_dw.setitem(w_last,"ReferenciaFiscal01",	dw_02_detail.getitemstring(k,"MetaPresupuestal"))
+					choose case w_field
+					case "Monto"
+						iv_dw.setitem(w_last,"Linea",			w_last)
+						iv_dw.setitem(w_last,w_field,	round(w_amount * dw_02_detail.getitemdecimal(k,"Porcentaje") / 100,2))
+					case "LocalAmount"
+						iv_dw.setitem(w_last,w_field,	round(w_amount * dw_02_detail.getitemdecimal(k,"Porcentaje") / 100,2))
+						iv_dw.setitem(w_last,"VoucherLine",	w_last)
+						iv_dw.setitem(w_last,"DollarAmount",	round(iv_dw.getitemdecimal(w_line,"DollarAmount") * dw_02_detail.getitemdecimal(k,"Porcentaje") / 100,2))					
+					case "Monto12"
+						if k <> 1 then
+							for m = 1 to 12
+								iv_dw.setitem(w_last,"Monto"+string(m,"00"),	round(iv_dw.getitemdecimal(w_line,"Monto"+string(m,"00")) * dw_02_detail.getitemdecimal(k,"Porcentaje") / 100,2))					
+							next			
+							iv_dw.setitem(w_last,"MontoDist",	round(iv_dw.getitemdecimal(w_line,"MontoDist") * dw_02_detail.getitemdecimal(k,"Porcentaje") / 100,2))					
+						end if 
+					case "Presupuesto12"
+						if k <> 1 then
+							for m = 1 to 12
+								iv_dw.setitem(w_last,"Presupuesto"+string(m,"00"),	round(iv_dw.getitemdecimal(w_line,"Presupuesto"+string(m,"00")) * dw_02_detail.getitemdecimal(k,"Porcentaje") / 100,2))	
+							next			
+						end if 
+					end choose
+					if k = w_rows and w_field = "Monto12" then
+						for m = 1 to 12						
+							iv_dw.setitem(w_line,"Monto"+string(m,"00"),	round(iv_dw.getitemdecimal(w_line,"Monto"+string(m,"00")) * dw_02_detail.getitemdecimal(1,"Porcentaje") / 100,2))					
+						next
+						iv_dw.setitem(w_line,"MontoDist",	round(iv_dw.getitemdecimal(w_line,"MontoDist") * dw_02_detail.getitemdecimal(1,"Porcentaje") / 100,2))					
+					end if 
+					if k = w_rows and w_field = "Presupuesto12" then
+						for m = 1 to 12						
+							iv_dw.setitem(w_line,"Presupuesto"+string(m,"00"),	round(iv_dw.getitemdecimal(w_line,"Presupuesto"+string(m,"00")) * dw_02_detail.getitemdecimal(1,"Porcentaje") / 100,2))					
+						next
+					end if 
+					
+//					if k=2 then
+//						return
+//					end if
+				next
+			end if 
+		end if 
+		close(this)
+	end if
+end choose
+
+end event
+
+type cb_1 from commandbutton within w_ma_ac_referenciafiscal_select
+integer x = 987
+integer y = 12
+integer width = 279
+integer height = 84
+integer taborder = 30
+integer textsize = -8
+integer weight = 400
+fontcharset fontcharset = ansi!
+fontpitch fontpitch = variable!
+fontfamily fontfamily = swiss!
+string facename = "MS Sans Serif"
+string text = "Buscar"
+end type
+
+event clicked;String ls_tab, ls_anio
+
+ls_anio = dw_1.getitemstring(1,"Ano")
+		
+datawindowchild dwc_nivel99
+dw_01.getchild('ReferenciaFiscal_99_d',	dwc_nivel99)
+dwc_nivel99.SetTransObject(SQLCA)
+dwc_nivel99.insertrow(0)
+
+dwc_nivel99.retrieve(ls_anio,"01")
+
+ls_tab = String(t.selectedtab ,'00')
+
+wf_fill_tree(ls_tab)
+wf_fill_description(ls_tab)
+
+end event
+
+type t from tab within w_ma_ac_referenciafiscal_select
+integer x = 14
+integer y = 108
+integer width = 3822
+integer height = 1904
+integer taborder = 50
+boolean bringtotop = true
+integer textsize = -8
+integer weight = 400
+fontcharset fontcharset = ansi!
+fontpitch fontpitch = variable!
+fontfamily fontfamily = swiss!
+string facename = "MS Sans Serif"
+long backcolor = 12632256
+boolean raggedright = true
+integer selectedtab = 1
+p1 p1
+p2 p2
+p3 p3
+end type
+
+on t.create
+this.p1=create p1
+this.p2=create p2
+this.p3=create p3
+this.Control[]={this.p1,&
+this.p2,&
+this.p3}
+end on
+
+on t.destroy
+destroy(this.p1)
+destroy(this.p2)
+destroy(this.p3)
+end on
+
+type p1 from userobject within t
+integer x = 18
+integer y = 112
+integer width = 3785
+integer height = 1776
+long backcolor = 12632256
+string text = "Cadena Presupuestal"
+long tabtextcolor = 33554432
+long tabbackcolor = 12632256
+string picturename = "DataManip!"
+long picturemaskcolor = 553648127
+dw_01 dw_01
+tv_01 tv_01
+end type
+
+on p1.create
+this.dw_01=create dw_01
+this.tv_01=create tv_01
+this.Control[]={this.dw_01,&
+this.tv_01}
+end on
+
+on p1.destroy
+destroy(this.dw_01)
+destroy(this.tv_01)
+end on
+
+type dw_01 from datawindow within p1
+integer x = 5
+integer y = 20
+integer width = 3758
+integer height = 412
+integer taborder = 20
+boolean bringtotop = true
+string dataobject = "dw_ma_ac_referenciafiscal_select_descrip"
+boolean border = false
+boolean livescroll = true
+end type
+
+event itemchanged;choose case dwo.name
+	case "referenciafiscal_99_d"
+		string w_referenciafiscal, w_data, w_ano
+		w_ano		= dw_1.getitemstring(1,"Ano")
+		w_data 	= data
+		
+	  SELECT AC_ReferenciaFiscal.ReferenciaFiscalRelacionada  
+		 INTO :w_referenciafiscal  
+		 FROM AC_ReferenciaFiscal  
+		WHERE ( AC_ReferenciaFiscal.Ano = :w_Ano ) AND  
+				( AC_ReferenciaFiscal.TipoReferenciaFiscal = "01" ) AND  
+				( AC_ReferenciaFiscal.Nivel = "99" ) AND  
+				( AC_ReferenciaFiscal.ReferenciaFiscal = :w_data )   ;
+
+		dw_01.setitem(1,"ReferenciaFiscal",			w_referenciafiscal)
+		dw_01.setitem(1,"ReferenciaFiscal_99_c",	data)
+		wf_fill_description("01")
+		
+end choose
+end event
+
+type tv_01 from treeview within p1
+integer y = 436
+integer width = 2702
+integer height = 1084
+integer taborder = 40
+boolean bringtotop = true
+integer textsize = -8
+integer weight = 400
+fontcharset fontcharset = ansi!
+fontpitch fontpitch = variable!
+fontfamily fontfamily = swiss!
+string facename = "MS Sans Serif"
+long textcolor = 33554432
+string picturename[] = {"Custom039!","Custom050!","Custom050!","Custom050!","Custom050!","Custom050!","Custom050!"}
+long picturemaskcolor = 553648127
+long statepicturemaskcolor = 536870912
+end type
+
+event doubleclicked;long				w_retcode
+TreeViewItem	w_tvi
+
+this.getitem(handle, w_tvi)
+if w_tvi.Level = iv_levelnumber01 then
+	w_retcode = this.FindItem(CurrentTreeItem!, handle)
+	t.p1.dw_01.setitem(1,"ReferenciaFiscal",w_tvi.Data)
+	wf_fill_description("01")
+	wf_sql_find_meta("Meta")
+end if
+end event
+
+type p2 from userobject within t
+integer x = 18
+integer y = 112
+integer width = 3785
+integer height = 1776
+long backcolor = 12632256
+string text = "Clasificador de Gastos"
+long tabtextcolor = 33554432
+long tabbackcolor = 12632256
+string picturename = "Custom048!"
+long picturemaskcolor = 553648127
+tv_02 tv_02
+dw_02 dw_02
+dw_02_detail dw_02_detail
+end type
+
+on p2.create
+this.tv_02=create tv_02
+this.dw_02=create dw_02
+this.dw_02_detail=create dw_02_detail
+this.Control[]={this.tv_02,&
+this.dw_02,&
+this.dw_02_detail}
+end on
+
+on p2.destroy
+destroy(this.tv_02)
+destroy(this.dw_02)
+destroy(this.dw_02_detail)
+end on
+
+type tv_02 from treeview within p2
+integer y = 428
+integer width = 2697
+integer height = 1000
+integer taborder = 50
+boolean bringtotop = true
+integer textsize = -8
+integer weight = 400
+fontcharset fontcharset = ansi!
+fontpitch fontpitch = variable!
+fontfamily fontfamily = swiss!
+string facename = "MS Sans Serif"
+long textcolor = 33554432
+string picturename[] = {"Custom039!"}
+long picturemaskcolor = 536870912
+long statepicturemaskcolor = 536870912
+end type
+
+event doubleclicked;long				w_retcode
+TreeViewItem	w_tvi
+
+this.getitem(handle, w_tvi)
+if w_tvi.Level = iv_levelnumber02 then
+	w_retcode = this.FindItem(CurrentTreeItem!, handle)
+	dw_02.setitem(1,"ReferenciaFiscal",w_tvi.Data)
+	wf_fill_description("02")
+	datawindowchild dwc_meta
+	dw_02_detail.getchild('MetaPresupuestal',	dwc_meta)
+	dwc_meta.SetTransObject(SQLCA)
+	dwc_meta.retrieve(dw_1.getitemstring(1,"Ano"),"01")
+	dw_02_detail.retrieve(dw_1.getitemstring(1,"Ano"),	"02", string(iv_levelnumber02,"00"), w_tvi.data)
+end if
+end event
+
+type dw_02 from datawindow within p2
+integer x = 5
+integer y = 12
+integer width = 3758
+integer height = 416
+integer taborder = 40
+boolean bringtotop = true
+string dataobject = "dw_ma_ac_referenciafiscal_select_descrip"
+boolean border = false
+boolean livescroll = true
+end type
+
+type dw_02_detail from datawindow within p2
+integer x = 9
+integer y = 1444
+integer width = 1467
+integer height = 324
+integer taborder = 50
+boolean bringtotop = true
+string dataobject = "dw_ma_ac_referenciafiscal_edit_detail"
+boolean vscrollbar = true
+boolean livescroll = true
+borderstyle borderstyle = stylelowered!
+end type
+
+type p3 from userobject within t
+integer x = 18
+integer y = 112
+integer width = 3785
+integer height = 1776
+long backcolor = 12632256
+string text = "Fuente Financiamiento"
+long tabtextcolor = 33554432
+long tabbackcolor = 12632256
+string picturename = "NestedReport!"
+long picturemaskcolor = 553648127
+tv_03 tv_03
+dw_03 dw_03
+end type
+
+on p3.create
+this.tv_03=create tv_03
+this.dw_03=create dw_03
+this.Control[]={this.tv_03,&
+this.dw_03}
+end on
+
+on p3.destroy
+destroy(this.tv_03)
+destroy(this.dw_03)
+end on
+
+type tv_03 from treeview within p3
+integer x = 5
+integer y = 428
+integer width = 2693
+integer height = 1092
+integer taborder = 60
+boolean bringtotop = true
+integer textsize = -8
+integer weight = 400
+fontcharset fontcharset = ansi!
+fontpitch fontpitch = variable!
+fontfamily fontfamily = swiss!
+string facename = "MS Sans Serif"
+long textcolor = 33554432
+string picturename[] = {"Custom039!"}
+long picturemaskcolor = 536870912
+long statepicturemaskcolor = 536870912
+end type
+
+event doubleclicked;long				w_retcode
+TreeViewItem	w_tvi
+
+this.getitem(handle, w_tvi)
+if w_tvi.Level = iv_levelnumber03 then
+	w_retcode = this.FindItem(CurrentTreeItem!, handle)
+	dw_03.setitem(1,"ReferenciaFiscal",w_tvi.Data)
+	wf_fill_description("03")
+end if
+end event
+
+type dw_03 from datawindow within p3
+integer y = 12
+integer width = 3758
+integer height = 408
+integer taborder = 40
+boolean bringtotop = true
+string dataobject = "dw_ma_ac_referenciafiscal_select_descrip"
+boolean border = false
+boolean livescroll = true
+end type
+
+type dw_1 from datawindow within w_ma_ac_referenciafiscal_select
+integer x = 37
+integer y = 4
+integer width = 928
+integer height = 104
+integer taborder = 10
+boolean bringtotop = true
+string dataobject = "dw_ma_ac_referenciafiscal_select_positio"
+boolean border = false
+boolean livescroll = true
+end type
+
+event itemchanged;String ls_tab
+
+ls_tab = String(t.selectedtab ,'00')
+
+choose case dwo.name
+	case "ano"
+		datawindowchild dwc_nivel99
+		dw_01.getchild('ReferenciaFiscal_99_d',	dwc_nivel99)
+		dwc_nivel99.SetTransObject(SQLCA)
+		dwc_nivel99.insertrow(0)
+
+		dwc_nivel99.retrieve(data,"01")
+		
+		wf_fill_tree(ls_tab)
+		wf_fill_description(ls_tab)
+end choose
+end event
+
+type dw_nivel from datawindow within w_ma_ac_referenciafiscal_select
+integer x = 3890
+integer y = 36
+integer width = 494
+integer height = 360
+integer taborder = 20
+boolean bringtotop = true
+string dataobject = "dw_ma_ac_referenciafiscal_select_nivel"
+boolean livescroll = true
+borderstyle borderstyle = stylelowered!
+end type
+
+type dw_data from datawindow within w_ma_ac_referenciafiscal_select
+integer x = 3895
+integer y = 412
+integer width = 494
+integer height = 360
+integer taborder = 60
+boolean bringtotop = true
+string dataobject = "dw_ma_ac_referenciafiscal_select_data"
+boolean livescroll = true
+borderstyle borderstyle = stylelowered!
+end type
+
+type cb_ok from u_cb within w_ma_ac_referenciafiscal_select
+integer x = 1609
+integer y = 12
+integer width = 366
+integer taborder = 30
+boolean bringtotop = true
+fontcharset fontcharset = ansi!
+string text = "Seleccionar"
+end type
+
+type cb_cancel from u_cb within w_ma_ac_referenciafiscal_select
+integer x = 2002
+integer y = 12
+integer width = 297
+integer taborder = 40
+boolean bringtotop = true
+fontcharset fontcharset = ansi!
+string text = "Cancelar"
+end type
+

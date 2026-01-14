@@ -1,0 +1,267 @@
+USE [testing5]
+GO
+
+/****** Object:  Table [dbo].[FA_Activo]    Script Date: 1/14/2026 5:38:46 PM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE TABLE [dbo].[FA_Activo](
+	[Activo] [char](10) NOT NULL,
+	[BusquedaLocal] [char](255) NULL,
+	[BusquedaIngles] [char](250) NULL,
+	[CodigoMecanico] [char](10) NULL,
+	[CodigoInterno] [char](20) NULL,
+	[SituacionActivo] [char](2) NOT NULL,
+	[CodigoBarras] [char](15) NULL,
+	[Categoria] [char](10) NOT NULL,
+	[EmpleadoaCargo] [int] NULL,
+	[TipoActivo] [char](1) NULL,
+	[NumeroUnidades] [int] NULL,
+	[Fabricante] [char](4) NOT NULL,
+	[FabricacionPais] [char](4) NOT NULL,
+	[Modelo] [varchar](25) NULL,
+	[Cilindraje] [char](20) NULL,
+	[NumeroSerie] [char](35) NULL,
+	[PeriodoIngreso] [char](6) NULL,
+	[PeriodoInicioDepreciacion] [char](6) NULL,
+	[PeriodoInicioRevaluacion] [char](6) NULL,
+	[PeriodoRetiro] [char](6) NULL,
+	[FechaRetiro] [datetime] NULL,
+	[CompaniaSocio] [char](8) NOT NULL,
+	[Clasificacion] [char](15) NOT NULL,
+	[Ubicacion] [varchar](15) NOT NULL,
+	[CodigoCatastro] [char](8) NULL,
+	[AreaFisicaCatastro] [money] NULL,
+	[InventarioFisicoFecha] [datetime] NULL,
+	[PolizaSeguro] [char](8) NULL,
+	[CentroCostos] [char](10) NOT NULL,
+	[UnidadNegocio] [char](4) NOT NULL,
+	[Manejo] [char](2) NULL,
+	[FechaIngreso] [datetime] NULL,
+	[MontoLocal] [money] NULL,
+	[MontoDolares] [money] NULL,
+	[MontoReferencia] [money] NULL,
+	[MontoMercado] [money] NULL,
+	[TipodeCambio] [money] NULL,
+	[Voucher] [char](12) NULL,
+	[FacturaTipoDocumento] [char](2) NULL,
+	[FacturaNumeroDocumento] [char](14) NULL,
+	[FacturaProveedor] [int] NULL,
+	[FacturaFecha] [datetime] NULL,
+	[GenerarVoucherIngresoFlag] [char](1) NULL,
+	[NumeroOrden] [char](15) NULL,
+	[NumeroGuia] [char](15) NULL,
+	[NumeroOrdenFecha] [datetime] NULL,
+	[NumeroGuiaFecha] [datetime] NULL,
+	[MonedaCodigo] [char](2) NULL,
+	[NumeroPlaca] [char](10) NULL,
+	[NumeroSerieMotor] [char](35) NULL,
+	[MarcaMotor] [char](20) NULL,
+	[Color] [char](3) NOT NULL,
+	[EstadoConservacion] [char](2) NOT NULL,
+	[Estado] [char](1) NULL,
+	[Material] [char](30) NULL,
+	[Dimensiones] [char](30) NULL,
+	[NumerodeParte] [char](35) NULL,
+	[TipoMejora] [char](1) NULL,
+	[CentroCostoDestino] [char](6) NULL,
+	[CategoriaFinanciera] [char](10) NULL,
+	[NumeroDocumentoAlmacen] [char](20) NULL,
+	[NumeroDocumentoAlmacenFecha] [datetime] NULL,
+	[EmpleadoResponsable] [int] NOT NULL,
+	[TipoMaterial] [char](3) NOT NULL,
+	[CodigoINC] [char](20) NULL,
+	[TipoBienCultural] [char](3) NULL,
+	[Autor] [char](4) NULL,
+	[Observacion] [varchar](255) NULL,
+	[ValorTasacion] [money] NULL,
+	[Referencia01] [varchar](20) NULL,
+	[Referencia02] [varchar](20) NULL,
+	[InventarioFisicoFlag] [char](1) NULL,
+	[Referencia03] [char](15) NULL,
+	[Modalidad] [char](2) NULL,
+	[InventarioFisicoComentario] [varchar](255) NULL,
+	[ActivoConsolidado] [char](10) NULL,
+	[LocacionDetallada] [char](20) NULL,
+	[Departamento] [char](4) NULL,
+	[Responsable] [char](4) NULL,
+	[NumeroUnidadesCodigo] [char](6) NULL,
+	[FabricacionAno] [char](4) NULL,
+	[NumeroAsiento] [int] NULL,
+	[ProduccionUnidad] [char](6) NULL,
+	[ProduccionCapacidad] [money] NULL,
+	[ProcesoProductivo] [char](2) NULL,
+	[Proyecto] [char](15) NULL,
+	[Sucursal] [char](4) NOT NULL,
+	[CampoReferencia] [char](12) NULL,
+	[DepreciacionEspecificaFlag] [char](1) NULL,
+	[VoucherRetiro] [char](12) NULL,
+	[CuentaHistorica] [char](20) NULL,
+	[CuentaGasto] [char](20) NULL,
+	[DescripcionInventario] [char](250) NULL,
+	[Fuente] [char](2) NULL,
+	[MantenimientoFlag] [char](1) NULL,
+	[VoucherGrupo01] [char](10) NULL,
+	[VoucherGrupo01Fecha] [datetime] NULL,
+	[UltimoUsuario] [char](20) NULL,
+	[UltimaFechaModif] [datetime] NULL,
+	[PreparadoPor] [int] NULL,
+	[FechaPreparacion] [datetime] NULL,
+	[AprobadoPor] [int] NULL,
+	[FechaAprobacion] [datetime] NULL,
+	[AUXILIAR] [varchar](255) NULL,
+	[RutaImagen] [varchar](255) NULL,
+	[Arquitectura] [varchar](3) NULL,
+	[Procesador] [varchar](3) NULL,
+	[SistemaOperativo] [varchar](3) NULL,
+	[FuncionActivo] [varchar](3) NULL,
+	[EstadoActivo] [varchar](3) NULL,
+	[Garantia] [varchar](30) NULL,
+	[Ram] [varchar](10) NULL,
+	[DiscoDuro] [varchar](10) NULL,
+	[FlagEnRed] [varchar](3) NULL,
+	[ColorImpresion] [varchar](15) NULL,
+	[EnCPU] [varchar](10) NULL,
+	[TecnicoResponsable] [int] NULL,
+	[Titulo] [text] NULL,
+	[CategoriaInventario] [char](10) NULL,
+	[Carroceria] [varchar](30) NULL,
+ CONSTRAINT [PK__FA_Activo__695412AE] PRIMARY KEY CLUSTERED 
+(
+	[Activo] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, FILLFACTOR = 90, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
+
+ALTER TABLE [dbo].[FA_Activo] ADD  CONSTRAINT [DF_FA_Activo_EmpleadoaCargo]  DEFAULT ((-1)) FOR [EmpleadoaCargo]
+GO
+
+ALTER TABLE [dbo].[FA_Activo] ADD  CONSTRAINT [DF_FA_Activo_Fabricante]  DEFAULT (447) FOR [Fabricante]
+GO
+
+ALTER TABLE [dbo].[FA_Activo] ADD  CONSTRAINT [DF_FA_Activo_FabricacionPais]  DEFAULT ('NDE') FOR [FabricacionPais]
+GO
+
+ALTER TABLE [dbo].[FA_Activo] ADD  CONSTRAINT [DF_FA_Activo_UnidadNegocio]  DEFAULT ('LIMA') FOR [UnidadNegocio]
+GO
+
+ALTER TABLE [dbo].[FA_Activo] ADD  CONSTRAINT [DF_FA_Activo_Color]  DEFAULT ('NDE') FOR [Color]
+GO
+
+ALTER TABLE [dbo].[FA_Activo] ADD  CONSTRAINT [DF_FA_Activo_EmpleadoResponsable]  DEFAULT ((-1)) FOR [EmpleadoResponsable]
+GO
+
+ALTER TABLE [dbo].[FA_Activo] ADD  CONSTRAINT [DF_FA_Activo_TipoMaterial]  DEFAULT ('NDE') FOR [TipoMaterial]
+GO
+
+ALTER TABLE [dbo].[FA_Activo] ADD  CONSTRAINT [DF_FA_Activo_Sucursal]  DEFAULT ('LIMA') FOR [Sucursal]
+GO
+
+ALTER TABLE [dbo].[FA_Activo]  WITH NOCHECK ADD  CONSTRAINT [FK_FA_Activo_AC_CostCenterMst] FOREIGN KEY([CentroCostos])
+REFERENCES [dbo].[AC_CostCenterMst] ([CostCenter])
+GO
+
+ALTER TABLE [dbo].[FA_Activo] CHECK CONSTRAINT [FK_FA_Activo_AC_CostCenterMst]
+GO
+
+ALTER TABLE [dbo].[FA_Activo]  WITH NOCHECK ADD  CONSTRAINT [FK_FA_Activo_ColorMast] FOREIGN KEY([Color])
+REFERENCES [dbo].[ColorMast] ([Color])
+GO
+
+ALTER TABLE [dbo].[FA_Activo] CHECK CONSTRAINT [FK_FA_Activo_ColorMast]
+GO
+
+ALTER TABLE [dbo].[FA_Activo]  WITH NOCHECK ADD  CONSTRAINT [FK_FA_Activo_FA_Categoria] FOREIGN KEY([Categoria])
+REFERENCES [dbo].[FA_Categoria] ([Categoria])
+GO
+
+ALTER TABLE [dbo].[FA_Activo] CHECK CONSTRAINT [FK_FA_Activo_FA_Categoria]
+GO
+
+ALTER TABLE [dbo].[FA_Activo]  WITH NOCHECK ADD  CONSTRAINT [FK_FA_Activo_FA_Clasificacion] FOREIGN KEY([Clasificacion])
+REFERENCES [dbo].[FA_Clasificacion] ([Clasificacion])
+GO
+
+ALTER TABLE [dbo].[FA_Activo] CHECK CONSTRAINT [FK_FA_Activo_FA_Clasificacion]
+GO
+
+ALTER TABLE [dbo].[FA_Activo]  WITH NOCHECK ADD  CONSTRAINT [FK_FA_Activo_FA_EstadoConservacion] FOREIGN KEY([EstadoConservacion])
+REFERENCES [dbo].[FA_EstadoConservacion] ([CodigoEstado])
+GO
+
+ALTER TABLE [dbo].[FA_Activo] CHECK CONSTRAINT [FK_FA_Activo_FA_EstadoConservacion]
+GO
+
+ALTER TABLE [dbo].[FA_Activo]  WITH NOCHECK ADD  CONSTRAINT [FK_FA_Activo_FA_MaterialActivo] FOREIGN KEY([TipoMaterial])
+REFERENCES [dbo].[FA_MaterialActivo] ([TipoMaterial])
+GO
+
+ALTER TABLE [dbo].[FA_Activo] CHECK CONSTRAINT [FK_FA_Activo_FA_MaterialActivo]
+GO
+
+ALTER TABLE [dbo].[FA_Activo]  WITH NOCHECK ADD  CONSTRAINT [FK_FA_Activo_FA_ModalidadAdquisicion] FOREIGN KEY([Modalidad])
+REFERENCES [dbo].[FA_ModalidadAdquisicion] ([Modalidad])
+GO
+
+ALTER TABLE [dbo].[FA_Activo] CHECK CONSTRAINT [FK_FA_Activo_FA_ModalidadAdquisicion]
+GO
+
+ALTER TABLE [dbo].[FA_Activo]  WITH NOCHECK ADD  CONSTRAINT [FK_FA_Activo_FA_SituacionActivo] FOREIGN KEY([SituacionActivo])
+REFERENCES [dbo].[FA_SituacionActivo] ([SituacionActivo])
+GO
+
+ALTER TABLE [dbo].[FA_Activo] CHECK CONSTRAINT [FK_FA_Activo_FA_SituacionActivo]
+GO
+
+ALTER TABLE [dbo].[FA_Activo]  WITH NOCHECK ADD  CONSTRAINT [FK_FA_Activo_fa_ubicaciones] FOREIGN KEY([Ubicacion])
+REFERENCES [dbo].[fa_ubicaciones] ([Ubicacion])
+GO
+
+ALTER TABLE [dbo].[FA_Activo] CHECK CONSTRAINT [FK_FA_Activo_fa_ubicaciones]
+GO
+
+ALTER TABLE [dbo].[FA_Activo]  WITH NOCHECK ADD  CONSTRAINT [FK_FA_Activo_Pais] FOREIGN KEY([FabricacionPais])
+REFERENCES [dbo].[Pais] ([Pais])
+GO
+
+ALTER TABLE [dbo].[FA_Activo] CHECK CONSTRAINT [FK_FA_Activo_Pais]
+GO
+
+ALTER TABLE [dbo].[FA_Activo]  WITH NOCHECK ADD  CONSTRAINT [FK_FA_Activo_PersonaMast] FOREIGN KEY([EmpleadoaCargo])
+REFERENCES [dbo].[PersonaMast] ([Persona])
+GO
+
+ALTER TABLE [dbo].[FA_Activo] CHECK CONSTRAINT [FK_FA_Activo_PersonaMast]
+GO
+
+ALTER TABLE [dbo].[FA_Activo]  WITH CHECK ADD  CONSTRAINT [FK_FA_Activo_PersonaMast1] FOREIGN KEY([EmpleadoResponsable])
+REFERENCES [dbo].[PersonaMast] ([Persona])
+GO
+
+ALTER TABLE [dbo].[FA_Activo] CHECK CONSTRAINT [FK_FA_Activo_PersonaMast1]
+GO
+
+ALTER TABLE [dbo].[FA_Activo]  WITH NOCHECK ADD  CONSTRAINT [FK_FA_Activo_PersonaMast2] FOREIGN KEY([EmpleadoResponsable])
+REFERENCES [dbo].[PersonaMast] ([Persona])
+GO
+
+ALTER TABLE [dbo].[FA_Activo] CHECK CONSTRAINT [FK_FA_Activo_PersonaMast2]
+GO
+
+ALTER TABLE [dbo].[FA_Activo]  WITH NOCHECK ADD  CONSTRAINT [FK_FA_Activo_WH_Marcas] FOREIGN KEY([Fabricante])
+REFERENCES [dbo].[WH_Marcas] ([MarcaCodigo])
+GO
+
+ALTER TABLE [dbo].[FA_Activo] CHECK CONSTRAINT [FK_FA_Activo_WH_Marcas]
+GO
+
+ALTER TABLE [dbo].[FA_Activo]  WITH CHECK ADD  CONSTRAINT [CK_FA_Activo] CHECK  (([unidadNegocio] = 'LIMA' and [Sucursal] = 'LIMA'))
+GO
+
+ALTER TABLE [dbo].[FA_Activo] CHECK CONSTRAINT [CK_FA_Activo]
+GO
+
+
