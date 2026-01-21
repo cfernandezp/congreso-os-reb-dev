@@ -1,19 +1,19 @@
 forward
-global type w_fa_rep_076_activos_asignados from w_windowbase
+global type w_fa_rep_011_activos_empleados from w_windowbase
 end type
-type cb_centrocosto from u_cb within w_fa_rep_076_activos_asignados
+type cb_centrocosto from u_cb within w_fa_rep_011_activos_empleados
 end type
-type cb_search from u_cb within w_fa_rep_076_activos_asignados
+type cb_search from u_cb within w_fa_rep_011_activos_empleados
 end type
-type dw_reporte from datawindow within w_fa_rep_076_activos_asignados
+type dw_reporte from datawindow within w_fa_rep_011_activos_empleados
 end type
-type cb_codigomecanico from u_cb within w_fa_rep_076_activos_asignados
+type cb_codigomecanico from u_cb within w_fa_rep_011_activos_empleados
 end type
-type cb_empleado from u_cb within w_fa_rep_076_activos_asignados
+type cb_empleado from u_cb within w_fa_rep_011_activos_empleados
 end type
-type dw_list from datawindow within w_fa_rep_076_activos_asignados
+type dw_list from datawindow within w_fa_rep_011_activos_empleados
 end type
-type dw_position from datawindow within w_fa_rep_076_activos_asignados
+type dw_position from datawindow within w_fa_rep_011_activos_empleados
 end type
 end forward
 
@@ -21,12 +21,12 @@ shared variables
  
 end variables
 
-global type w_fa_rep_076_activos_asignados from w_windowbase
+global type w_fa_rep_011_activos_empleados from w_windowbase
 integer x = 9
 integer y = 360
 integer width = 2866
 integer height = 1504
-string title = "076 - Activos Asignados a Usuarios"
+string title = "011 - Activos Asignados a Usuarios"
 boolean controlmenu = true
 boolean minbox = true
 windowtype windowtype = popup!
@@ -38,7 +38,7 @@ cb_empleado cb_empleado
 dw_list dw_list
 dw_position dw_position
 end type
-global w_fa_rep_076_activos_asignados w_fa_rep_076_activos_asignados
+global w_fa_rep_011_activos_empleados w_fa_rep_011_activos_empleados
 
 type variables
 long iv_line
@@ -53,84 +53,90 @@ public subroutine wf_print ()
 public function integer wf_open ()
 end prototypes
 
-public subroutine wf_prepare_sql ();Long w_persona
-String w_naturaleza, w_estado, w_centrocosto, w_situacion
+public subroutine wf_prepare_sql ();string w_where,w_sql,w_estado, w_dni_f
+string w_companiasocio,w_naturaleza, w_centrocosto, w_condicion
+Long w_persona
+long w_long, w_assetdigit
+
 
 dw_position.accepttext()
+w_persona	 = dw_position.getitemnumber(1,"Persona")
+w_dni_f	 = dw_position.getitemstring(1,"dni_f")
+w_naturaleza = dw_position.getitemstring(1,"Naturaleza")
+w_estado		 = dw_position.getitemstring(1,"Estado")
+w_centrocosto= dw_position.getitemstring(1,"CentroCosto")
+w_condicion = dw_position.getitemstring(1,"Situacion")
+w_where=iv_original_sql
 
-// Persona es OBLIGATORIO - no puede ser NULL
-w_persona = dw_position.getitemnumber(1, "Persona")
 
-// Validar que se haya seleccionado un empleado
-if IsNull(w_persona) or w_persona <= 0 then
-    MessageBox("Validacion", "Debe seleccionar un empleado responsable.", StopSign!)
-    return
+
+if not isnull(w_persona) then
+	if w_dni_f='S' then
+		w_where = w_where + ' AND (PersonaMast.Documento = :documento)' 	 
+	else
+		w_where = w_where + ' AND (FA_Activo.EmpleadoaCargo = :persona)' 	 
+	end if
 end if
 
-// Naturaleza
-if dw_position.getitemstring(1, "Naturaleza_all") = "S" then
-    SetNull(w_naturaleza)
-else
-    w_naturaleza = dw_position.getitemstring(1, "Naturaleza")
+if not isnull(w_naturaleza) then
+	w_where = w_where + ' AND (FA_Activo.Manejo = :naturaleza)' 	 
 end if
 
-// Estado
-if dw_position.getitemstring(1, "Estado_all") = "S" then
-    SetNull(w_estado)
-else
-    w_estado = dw_position.getitemstring(1, "Estado")
+if not isnull(w_estado) then
+	w_where = w_where + ' AND (FA_Activo.Estado = :estado)' 	 
 end if
 
-// Centro de Costo
-if dw_position.getitemstring(1, "CentroCosto_all") = "S" then
-    SetNull(w_centrocosto)
-else
-    w_centrocosto = dw_position.getitemstring(1, "CentroCosto")
+if not isnull(w_centrocosto) then
+	w_where = w_where + ' AND (FA_Activo.CentroCostos = :centrocosto ) '
+end if
+if not isnull(w_condicion) then
+	w_where = W_where + " AND ( FA_Activo.inventariofisicoflag = '" + w_Condicion + "')"
 end if
 
-// Situacion
-if dw_position.getitemstring(1, "Situacion_all") = "S" then
-    SetNull(w_situacion)
-else
-    w_situacion = dw_position.getitemstring(1, "Situacion")
-end if
 
-// Retrieve con argumentos - SIN modificar el SQL
-dw_list.retrieve(w_persona, w_naturaleza, w_estado, w_centrocosto, w_situacion)
+string ret_code
+w_where = f_add_nolock_to_sql(w_where)
+w_SQL = 'DataWindow.Table.Select="' + w_where + '"'
+ret_code = dw_list.modify(w_SQL)
+//messagebox(ret_code,w_sql) 
+dw_list.retrieve(w_persona,w_naturaleza,w_estado, w_centrocosto, iv_dni)
+				 
+ 
 end subroutine
 
 public subroutine wf_print ();dw_list. print()
  
 end subroutine
 
-public function integer wf_open ();long w_null_number
+public function integer wf_open ();long   w_null_number
+String w_tipo_equipo
 
 setnull(w_null_number)
 
-dw_position.settransobject(SQLCA)
-dw_list.settransobject(SQLCA)
+dw_position.settransobject(SQLCA) // Header
+dw_list.settransobject(SQLCA) // Header
 
 dw_position.insertrow(0)
 dw_position.setfocus()
+dw_position.setitem(1,"Persona_all",	"S")
+dw_position.setitem(1,"Persona",			w_null_number)
+dw_position.setitem(1,"Dni_f",	"S")
+dw_position.setitem(1,"Naturaleza_all","S")
+dw_position.setitem(1,"Naturaleza",		str_global.gv_null_string)
+dw_position.setitem(1,"Estado_all","S")
+dw_position.setitem(1,"CentroCosto_all","S")
+dw_position.setitem(1,"Situacion_all","S")
+dw_position.setitem(1,"Estado",		   str_global.gv_null_string)
+dw_position.setitem(1,"SumarizadoFlag","N")
 
-// Persona OBLIGATORIO - inicializar en NULL (usuario debe seleccionar)
-dw_position.setitem(1, "Persona", w_null_number)
-dw_position.setitem(1, "Dni_f", "S")
-dw_position.setitem(1, "Naturaleza_all", "S")
-dw_position.setitem(1, "Naturaleza", str_global.gv_null_string)
-dw_position.setitem(1, "Estado_all", "S")
-dw_position.setitem(1, "CentroCosto_all", "S")
-dw_position.setitem(1, "Situacion_all", "S")
-dw_position.setitem(1, "Estado", str_global.gv_null_string)
-dw_position.setitem(1, "SumarizadoFlag", "N")
-
-iv_detail_original = dw_list.describe("Datawindow.Detail.Height")
+iv_original_sql 	 = dw_list.Describe("Datawindow.Table.Select")
+iv_detail_original = dw_list.describe( "Datawindow.Detail.Height")
 
 dw_list.modify("DataWindow.Print.preview = yes")
-m_main.mf_menu_change("m_print", "enabled")
+m_main.mf_menu_change("m_print","enabled") 		
 f_change_voucher_titles(dw_position)
 f_change_voucher_titles(dw_list)
-
+//	Registrar Objetos Resize
 io_resize.uf_Register(dw_list, 7)
 
 return 0
@@ -183,7 +189,7 @@ CASE  "closed"
 end choose
 end event
 
-on w_fa_rep_076_activos_asignados.create
+on w_fa_rep_011_activos_empleados.create
 int iCurrent
 call super::create
 this.cb_centrocosto=create cb_centrocosto
@@ -203,7 +209,7 @@ this.Control[iCurrent+6]=this.dw_list
 this.Control[iCurrent+7]=this.dw_position
 end on
 
-on w_fa_rep_076_activos_asignados.destroy
+on w_fa_rep_011_activos_empleados.destroy
 call super::destroy
 destroy(this.cb_centrocosto)
 destroy(this.cb_search)
@@ -214,7 +220,7 @@ destroy(this.dw_list)
 destroy(this.dw_position)
 end on
 
-type cb_centrocosto from u_cb within w_fa_rep_076_activos_asignados
+type cb_centrocosto from u_cb within w_fa_rep_011_activos_empleados
 integer x = 1659
 integer y = 84
 integer width = 73
@@ -223,7 +229,7 @@ integer weight = 400
 string text = "..."
 end type
 
-type cb_search from u_cb within w_fa_rep_076_activos_asignados
+type cb_search from u_cb within w_fa_rep_011_activos_empleados
 integer x = 2551
 integer y = 36
 integer width = 283
@@ -234,7 +240,7 @@ string text = "Buscar"
 boolean default = true
 end type
 
-type dw_reporte from datawindow within w_fa_rep_076_activos_asignados
+type dw_reporte from datawindow within w_fa_rep_011_activos_empleados
 boolean visible = false
 integer x = 937
 integer y = 472
@@ -247,7 +253,7 @@ string dataobject = "dw_fa_asset_report"
 boolean livescroll = true
 end type
 
-type cb_codigomecanico from u_cb within w_fa_rep_076_activos_asignados
+type cb_codigomecanico from u_cb within w_fa_rep_011_activos_empleados
 boolean visible = false
 integer x = 2834
 integer y = 316
@@ -258,7 +264,7 @@ integer weight = 400
 string text = "..."
 end type
 
-type cb_empleado from u_cb within w_fa_rep_076_activos_asignados
+type cb_empleado from u_cb within w_fa_rep_011_activos_empleados
 integer x = 1659
 integer y = 12
 integer width = 73
@@ -267,14 +273,14 @@ integer weight = 400
 string text = "..."
 end type
 
-type dw_list from datawindow within w_fa_rep_076_activos_asignados
+type dw_list from datawindow within w_fa_rep_011_activos_empleados
 integer x = 23
 integer y = 252
 integer width = 2816
 integer height = 1148
 integer taborder = 60
 boolean bringtotop = true
-string dataobject = "dw_fa_rep_076_activos_asignados"
+string dataobject = "dw_fa_rep_011_activos_empleados"
 boolean hscrollbar = true
 boolean vscrollbar = true
 boolean hsplitscroll = true
@@ -282,13 +288,13 @@ boolean livescroll = true
 borderstyle borderstyle = stylelowered!
 end type
 
-type dw_position from datawindow within w_fa_rep_076_activos_asignados
+type dw_position from datawindow within w_fa_rep_011_activos_empleados
 integer x = 18
 integer y = 12
 integer width = 2496
 integer height = 212
 integer taborder = 10
-string dataobject = "dw_fa_rep_076_empleadoacargo_position"
+string dataobject = "dw_fa_rep_011_empleadoacargo_position"
 boolean border = false
 boolean livescroll = true
 end type

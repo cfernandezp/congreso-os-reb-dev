@@ -1,0 +1,18 @@
+global type f_sql_read_ubicacion_name from function_object
+end type
+
+forward prototypes
+global function string f_sql_read_ubicacion_name (string pa_ubicacion)
+end prototypes
+
+global function string f_sql_read_ubicacion_name (string pa_ubicacion);string w_nombre = ""
+
+  SELECT FA_Ubicaciones.DescripcionLocal  
+    INTO :w_nombre  
+    FROM FA_Ubicaciones  
+   WHERE FA_Ubicaciones.Ubicacion = :pa_ubicacion   ;
+	
+Return w_nombre
+
+end function
+
