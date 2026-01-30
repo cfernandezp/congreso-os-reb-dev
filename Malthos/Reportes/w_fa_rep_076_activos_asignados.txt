@@ -53,50 +53,21 @@ public subroutine wf_print ()
 public function integer wf_open ()
 end prototypes
 
-public subroutine wf_prepare_sql ();Long w_persona
-String w_naturaleza, w_estado, w_centrocosto, w_situacion
+public subroutine wf_prepare_sql ();String w_documento
 
 dw_position.accepttext()
 
-// Persona es OBLIGATORIO - no puede ser NULL
-w_persona = dw_position.getitemnumber(1, "Persona")
+// Obtener el DNI del empleado seleccionado
+w_documento = iv_dni
 
 // Validar que se haya seleccionado un empleado
-if IsNull(w_persona) or w_persona <= 0 then
+if IsNull(w_documento) or Trim(w_documento) = "" then
     MessageBox("Validacion", "Debe seleccionar un empleado responsable.", StopSign!)
     return
 end if
 
-// Naturaleza
-if dw_position.getitemstring(1, "Naturaleza_all") = "S" then
-    SetNull(w_naturaleza)
-else
-    w_naturaleza = dw_position.getitemstring(1, "Naturaleza")
-end if
-
-// Estado
-if dw_position.getitemstring(1, "Estado_all") = "S" then
-    SetNull(w_estado)
-else
-    w_estado = dw_position.getitemstring(1, "Estado")
-end if
-
-// Centro de Costo
-if dw_position.getitemstring(1, "CentroCosto_all") = "S" then
-    SetNull(w_centrocosto)
-else
-    w_centrocosto = dw_position.getitemstring(1, "CentroCosto")
-end if
-
-// Situacion
-if dw_position.getitemstring(1, "Situacion_all") = "S" then
-    SetNull(w_situacion)
-else
-    w_situacion = dw_position.getitemstring(1, "Situacion")
-end if
-
-// Retrieve con argumentos - SIN modificar el SQL
-dw_list.retrieve(w_persona, w_naturaleza, w_estado, w_centrocosto, w_situacion)
+// Retrieve usando el documento (DNI)
+dw_list.retrieve(w_documento)
 end subroutine
 
 public subroutine wf_print ();dw_list. print()
